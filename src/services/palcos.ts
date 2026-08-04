@@ -1,10 +1,12 @@
 import {
   collection,
   doc,
+  getDocs,
   onSnapshot,
   orderBy,
   query,
   runTransaction,
+  updateDoc,
 } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { computeEstado, computeEstadoPalcoBoleta } from "../lib/estado";
@@ -174,18 +176,26 @@ export async function actualizarVendiblePorBoleta(
   });
 }
 
-/** Libera un palco (solo permitido si no tiene abonos ni boletas sueltas vendidas). */
+/**
+ * Cancela la reserva completa de un palco y lo deja disponible de nuevo.
+ * Si tenía abonos registrados, se borran junto con la reserva (el llamador debe
+ * confirmar esto con el usuario antes, ya que es irreversible). No se puede
+ * cancelar si el palco tiene boletas sueltas vendidas: esas ventas son
+ * independientes y deben resolverse por su cuenta primero.
+ */
 export async function liberarPalco(eventId: string, localityId: string, palcoId: string) {
   const ref = palcoRef(eventId, localityId, palcoId);
+  const paymentsSnap = await getDocs(collection(ref, "payments"));
+
   await runTransaction(db, async (tx) => {
     const snap = await tx.get(ref);
     if (!snap.exists()) throw new Error("El palco ya no existe");
     const data = snap.data() as PalcoDoc;
-    if (data.montoAbonado > 0) {
-      throw new Error("No se puede liberar un palco con abonos registrados");
-    }
     if (data.boletasVendidas > 0) {
       throw new Error("No se puede liberar un palco con boletas sueltas vendidas");
+    }
+    for (const paymentDoc of paymentsSnap.docs) {
+      tx.delete(paymentDoc.ref);
     }
     tx.update(ref, {
       comprador: null,
@@ -193,6 +203,19 @@ export async function liberarPalco(eventId: string, localityId: string, palcoId:
       estado: "disponible",
       updatedAt: Date.now(),
     });
+  });
+}
+
+/** Cambia los datos del comprador de un palco ya reservado (corrección, no una nueva reserva). */
+export async function editarCompradorPalco(
+  eventId: string,
+  localityId: string,
+  palcoId: string,
+  comprador: Comprador,
+) {
+  await updateDoc(palcoRef(eventId, localityId, palcoId), {
+    comprador,
+    updatedAt: Date.now(),
   });
 }
 

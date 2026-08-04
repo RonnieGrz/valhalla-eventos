@@ -5,6 +5,7 @@ import {
   actualizarVendiblePorBoleta,
   agregarAbonoPalco,
   editarAbonoPalco,
+  editarCompradorPalco,
   liberarPalco,
   listenPalcoBoletaSales,
   listenPalcoPayments,
@@ -13,6 +14,7 @@ import {
 } from "../services/palcos";
 import type { Palco, PalcoBoletaSale, Payment } from "../types";
 import { BoletaSaleList } from "./BoletaSaleList";
+import { CompradorForm } from "./CompradorForm";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { EstadoBadge } from "./EstadoBadge";
 import { Modal } from "./Modal";
@@ -46,6 +48,8 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
   const [settingsError, setSettingsError] = useState<string | null>(null);
+  const [editingComprador, setEditingComprador] = useState(false);
+  const [compradorError, setCompradorError] = useState<string | null>(null);
 
   useEffect(() => {
     if (palco.estado === "disponible") return;
@@ -264,10 +268,19 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
       </div>
 
       {palco.comprador && (
-        <div className="mb-4 rounded-lg border border-gridline p-3 text-sm">
-          <p className="font-medium text-text-primary">{palco.comprador.nombre}</p>
-          <p className="text-text-secondary">CC {palco.comprador.cedula}</p>
-          <p className="text-text-secondary">{palco.comprador.telefono}</p>
+        <div className="mb-4 flex items-start justify-between gap-2 rounded-lg border border-gridline p-3 text-sm">
+          <div>
+            <p className="font-medium text-text-primary">{palco.comprador.nombre}</p>
+            <p className="text-text-secondary">CC {palco.comprador.cedula}</p>
+            <p className="text-text-secondary">{palco.comprador.telefono}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setEditingComprador(true)}
+            className="shrink-0 rounded-lg px-2 py-1 text-sm font-medium text-series-1 hover:bg-surface-2"
+          >
+            Cambiar datos
+          </button>
         </div>
       )}
 
@@ -297,11 +310,9 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
               Agregar abono
             </button>
           )}
-          {palco.montoAbonado === 0 && (
-            <button onClick={() => setConfirmLiberar(true)} className={buttonDangerClass}>
-              Liberar palco
-            </button>
-          )}
+          <button onClick={() => setConfirmLiberar(true)} className={buttonDangerClass}>
+            Cancelar reserva
+          </button>
         </div>
       )}
 
@@ -338,11 +349,34 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
         </Modal>
       )}
 
+      {editingComprador && palco.comprador && (
+        <Modal title="Cambiar datos del comprador" onClose={() => setEditingComprador(false)}>
+          <CompradorForm
+            initialValues={palco.comprador}
+            onCancel={() => setEditingComprador(false)}
+            onSubmit={async (values) => {
+              setCompradorError(null);
+              try {
+                await editarCompradorPalco(eventId, localityId, palco.id, values);
+                setEditingComprador(false);
+              } catch (e) {
+                setCompradorError(e instanceof Error ? e.message : "No se pudieron guardar los cambios");
+              }
+            }}
+          />
+          {compradorError && <p className="mt-3 text-sm text-status-critical">{compradorError}</p>}
+        </Modal>
+      )}
+
       {confirmLiberar && (
         <ConfirmDialog
-          title="Liberar palco"
-          message="¿Liberar este palco? Volverá a estar disponible."
-          confirmLabel={liberando ? "Liberando..." : "Liberar"}
+          title="Cancelar reserva"
+          message={
+            palco.montoAbonado > 0
+              ? `Este palco tiene ${formatCOP(palco.montoAbonado)} abonados. Si cancelas la reserva, ese historial de abonos se borrará y el palco quedará disponible de nuevo. Esta acción no se puede deshacer.`
+              : "¿Cancelar esta reserva? El palco volverá a estar disponible."
+          }
+          confirmLabel={liberando ? "Cancelando..." : "Cancelar reserva"}
           confirmDisabled={liberando}
           onCancel={() => setConfirmLiberar(false)}
           onConfirm={async () => {
