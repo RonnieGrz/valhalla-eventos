@@ -27,15 +27,34 @@ export function listenLocalities(eventId: string, cb: (localities: Localidad[]) 
 interface PalcosBatchOpts {
   capacidad: number;
   precio: number;
-  vendiblePorBoleta: boolean;
-  precioBoleta: number;
 }
 
-/** Crea la localidad y, si tiene palcos configurados, genera los N docs de palcos numerados. */
+/**
+ * Mayor número de palco ya usado en todo el evento (entre todas sus localidades),
+ * para que la numeración sea continua y no se repita entre localidades distintas.
+ */
+async function getEventMaxPalcoNumero(eventId: string): Promise<number> {
+  const localitiesSnap = await getDocs(localitiesCol(eventId));
+  const maxesPorLocalidad = await Promise.all(
+    localitiesSnap.docs.map(async (localityDoc) => {
+      const palcosSnap = await getDocs(
+        collection(db, "events", eventId, "localities", localityDoc.id, "palcos"),
+      );
+      return palcosSnap.docs.reduce((max, d) => Math.max(max, (d.data() as PalcoDoc).numero), 0);
+    }),
+  );
+  return maxesPorLocalidad.reduce((max, m) => Math.max(max, m), 0);
+}
+
+/** Crea la localidad y, si tiene palcos configurados, genera los N docs de palcos numerados.
+ *  Por defecto continúa a partir del último palco del evento (entre todas las localidades);
+ *  si se pasa `numeroInicial`, la numeración empieza ahí en su lugar (numeración manual, para
+ *  venues donde los palcos no siguen una secuencia continua entre localidades). Los palcos
+ *  nacen no vendibles por boleta suelta: esa opción se decide individualmente desde cada palco. */
 export async function createLocality(
   eventId: string,
   data: Omit<LocalidadDoc, "createdAt">,
-  palcosBoletaOpts?: { vendiblePorBoleta: boolean; precioBoleta: number },
+  numeroInicial?: number,
 ) {
   const localityRef = await addDoc(localitiesCol(eventId), {
     ...data,
@@ -43,41 +62,38 @@ export async function createLocality(
   } satisfies LocalidadDoc);
 
   if (data.palcosConfig.cantidad > 0) {
-    await batchCreatePalcos(eventId, localityRef.id, 1, data.palcosConfig.cantidad, {
+    const desde = numeroInicial ?? (await getEventMaxPalcoNumero(eventId)) + 1;
+    await batchCreatePalcos(eventId, localityRef.id, desde, desde + data.palcosConfig.cantidad - 1, {
       capacidad: data.palcosConfig.capacidadPorPalco,
       precio: data.palcosConfig.precio,
-      vendiblePorBoleta: palcosBoletaOpts?.vendiblePorBoleta ?? false,
-      precioBoleta: palcosBoletaOpts?.precioBoleta ?? 0,
     });
   }
 
   return localityRef;
 }
 
-/** Agrega N palcos nuevos numerados a continuación de los existentes. */
+/** Agrega N palcos nuevos a una localidad existente. Por defecto continúa a partir del último
+ *  palco del evento (entre todas las localidades); si se pasa `numeroInicial`, empieza ahí. */
 export async function addPalcosToLocality(
   eventId: string,
   localityId: string,
   cantidadNueva: number,
   capacidad: number,
   precio: number,
-  vendiblePorBoleta: boolean,
-  precioBoleta: number,
+  numeroInicial?: number,
 ) {
-  const existing = await getDocs(collection(db, "events", eventId, "localities", localityId, "palcos"));
-  const maxNumero = existing.docs.reduce(
-    (max, d) => Math.max(max, (d.data() as PalcoDoc).numero),
-    0,
-  );
-  await batchCreatePalcos(eventId, localityId, maxNumero + 1, maxNumero + cantidadNueva, {
+  const desde = numeroInicial ?? (await getEventMaxPalcoNumero(eventId)) + 1;
+  await batchCreatePalcos(eventId, localityId, desde, desde + cantidadNueva - 1, {
     capacidad,
     precio,
-    vendiblePorBoleta,
-    precioBoleta,
   });
 
+  const existingCantidad = (
+    await getDocs(collection(db, "events", eventId, "localities", localityId, "palcos"))
+  ).docs.length;
+
   await updateDoc(doc(db, "events", eventId, "localities", localityId), {
-    "palcosConfig.cantidad": maxNumero + cantidadNueva,
+    "palcosConfig.cantidad": existingCantidad,
     "palcosConfig.capacidadPorPalco": capacidad,
     "palcosConfig.precio": precio,
   });
@@ -102,8 +118,8 @@ async function batchCreatePalcos(
       estado: "disponible",
       comprador: null,
       montoAbonado: 0,
-      vendiblePorBoleta: opts.vendiblePorBoleta,
-      precioBoleta: opts.precioBoleta,
+      vendiblePorBoleta: false,
+      precioBoleta: 0,
       boletasVendidas: 0,
       createdAt: now,
       updatedAt: now,

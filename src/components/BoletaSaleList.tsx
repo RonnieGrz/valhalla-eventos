@@ -39,6 +39,15 @@ export function BoletaSaleList<S extends SaleListItem>({ sales, onSelect }: Bole
             <tr
               key={sale.id}
               onClick={() => onSelect(sale)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onSelect(sale);
+                }
+              }}
+              tabIndex={0}
+              role="button"
+              aria-label={`Ver venta de ${sale.comprador.nombre}`}
               className="cursor-pointer hover:bg-surface-2"
             >
               <td className="px-3 py-2 text-text-primary">{sale.comprador.nombre}</td>

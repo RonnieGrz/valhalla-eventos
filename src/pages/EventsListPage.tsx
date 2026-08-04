@@ -5,12 +5,13 @@ import { EventForm } from "../components/EventForm";
 import { Navbar } from "../components/Navbar";
 import { buttonPrimaryClass } from "../components/form/FormField";
 import { useEvents } from "../hooks/useEvents";
-import { createEvent, deleteEvent } from "../services/events";
+import { createEvent, deleteEvent, updateEvent } from "../services/events";
 import type { Evento } from "../types";
 
 export function EventsListPage() {
   const { events, loading } = useEvents();
   const [showForm, setShowForm] = useState(false);
+  const [eventoToEdit, setEventoToEdit] = useState<Evento | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [eventoToDelete, setEventoToDelete] = useState<Evento | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -33,8 +34,8 @@ export function EventsListPage() {
     <div className="min-h-screen bg-surface-2">
       <Navbar />
       <main className="mx-auto max-w-6xl px-4 py-8">
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-text-primary">Eventos</h1>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
+          <h1 className="font-display text-2xl font-bold text-text-primary">Eventos</h1>
           <button onClick={() => setShowForm(true)} className={buttonPrimaryClass}>
             + Nuevo evento
           </button>
@@ -59,6 +60,7 @@ export function EventsListPage() {
             <EventCard
               key={evento.id}
               evento={evento}
+              onEdit={() => setEventoToEdit(evento)}
               onDelete={() => setEventoToDelete(evento)}
             />
           ))}
@@ -81,6 +83,26 @@ export function EventsListPage() {
           onClose={() => setShowForm(false)}
           onSubmit={async (values) => {
             await createEvent({
+              nombre: values.nombre,
+              lugar: values.lugar,
+              fecha: values.fecha,
+              descripcion: values.descripcion ?? "",
+            });
+          }}
+        />
+      )}
+
+      {eventoToEdit && (
+        <EventForm
+          initialValues={{
+            nombre: eventoToEdit.nombre,
+            lugar: eventoToEdit.lugar,
+            fecha: eventoToEdit.fecha,
+            descripcion: eventoToEdit.descripcion,
+          }}
+          onClose={() => setEventoToEdit(null)}
+          onSubmit={async (values) => {
+            await updateEvent(eventoToEdit.id, {
               nombre: values.nombre,
               lugar: values.lugar,
               fecha: values.fecha,

@@ -58,6 +58,46 @@ export async function registrarAbono(
   });
 }
 
+/**
+ * Edita un abono ya registrado: ajusta el payment y, en la misma transacción,
+ * corrige montoAbonado/estado del padre por la diferencia entre el monto viejo y el nuevo.
+ */
+export async function editarAbono(
+  parentRef: DocumentReference,
+  paymentRef: DocumentReference,
+  cambios: NuevoAbono,
+  montoTotal: number,
+) {
+  await runTransaction(db, async (tx) => {
+    const parentSnap = await tx.get(parentRef);
+    const paymentSnap = await tx.get(paymentRef);
+    if (!parentSnap.exists()) throw new Error("El registro ya no existe");
+    if (!paymentSnap.exists()) throw new Error("El abono ya no existe");
+
+    const montoAnterior = (paymentSnap.data().monto as number) ?? 0;
+    const montoAbonadoActual = (parentSnap.data().montoAbonado as number) ?? 0;
+    const nuevoMontoAbonado = montoAbonadoActual - montoAnterior + cambios.monto;
+    const nuevoEstado = computeEstado(nuevoMontoAbonado, montoTotal);
+
+    tx.update(paymentRef, {
+      monto: cambios.monto,
+      fecha: cambios.fecha,
+      metodo: cambios.metodo,
+      nota: cambios.nota,
+    });
+
+    tx.update(parentRef, {
+      montoAbonado: nuevoMontoAbonado,
+      estado: nuevoEstado,
+      updatedAt: Date.now(),
+    });
+  });
+}
+
+export function paymentRef(parentRef: DocumentReference, paymentId: string) {
+  return doc(parentRef, "payments", paymentId);
+}
+
 /** Todos los abonos del evento (palcos + boletas), para el gráfico de recaudo en el tiempo. */
 export function listenEventPayments(eventId: string, cb: (payments: Payment[]) => void) {
   const q = query(

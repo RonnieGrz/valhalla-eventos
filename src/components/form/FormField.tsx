@@ -17,13 +17,13 @@ export function FormField({ label, error, children }: FormFieldProps) {
 }
 
 export const inputClass =
-  "w-full rounded-md border border-gridline bg-surface-1 px-3 py-2 text-text-primary outline-none focus:border-series-1 focus:ring-1 focus:ring-series-1";
+  "w-full rounded-lg border border-gridline bg-surface-1 px-3 py-2 text-text-primary outline-none focus:border-series-1 focus:ring-1 focus:ring-series-1";
 
 export const buttonPrimaryClass =
-  "rounded-md bg-series-1 px-4 py-2 font-medium text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50";
+  "rounded-lg bg-series-1 px-4 py-2 font-medium text-on-accent hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50";
 
 export const buttonSecondaryClass =
-  "rounded-md border border-gridline bg-surface-1 px-4 py-2 font-medium text-text-primary hover:bg-surface-2";
+  "rounded-lg border border-gridline bg-surface-1 px-4 py-2 font-medium text-text-primary hover:bg-surface-2";
 
 export const buttonDangerClass =
-  "rounded-md border border-status-critical px-4 py-2 font-medium text-status-critical hover:bg-status-critical/10 disabled:cursor-not-allowed disabled:opacity-50";
+  "rounded-lg border border-status-critical px-4 py-2 font-medium text-status-critical hover:bg-status-critical/10 disabled:cursor-not-allowed disabled:opacity-50";

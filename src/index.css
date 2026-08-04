@@ -1,74 +1,125 @@
 @import "tailwindcss";
 
+/*
+  Paleta "Gothic Romance": negro profundo (#0A0908), vino tinto (#49111C),
+  marfil (#F2F4F3) y dos neutros cálidos tierra (#A9927D, #5E503F).
+  Sin verde en la paleta original: "vendido" se reasigna a un vino más
+  profundo (rico/definitivo) distinto del acento de marca, y "crítico" se
+  desplaza hacia un rojo más anaranjado para que ambos sean distinguibles.
+*/
+
 :root {
   color-scheme: light;
-  --surface-1: #fcfcfb;
-  --surface-2: #f9f9f7;
-  --text-primary: #0b0b0b;
-  --text-secondary: #52514e;
-  --text-muted: #898781;
-  --gridline: #e1e0d9;
-  --baseline: #c3c2b7;
-  --border-hairline: rgba(11, 11, 11, 0.1);
+  --surface-1: #ffffff;
+  --surface-2: #f2f4f3;
+  --text-primary: #0a0908;
+  --text-secondary: #5e503f;
+  --text-muted: #7a6852;
+  --gridline: #e5dacd;
+  --baseline: #c9b6a0;
+  --border-hairline: rgba(10, 9, 8, 0.1);
+  --on-accent: #ffffff;
 
-  --series-1: #2a78d6;
-  --series-2: #eb6834;
-  --series-3: #1baf7a;
-  --series-4: #eda100;
-  --series-5: #e87ba4;
-  --series-6: #008300;
-  --series-7: #4a3aa7;
-  --series-8: #e34948;
+  --series-1: #49111c;
+  --series-2: #8c5a2e;
+  --series-3: #5c2a44;
+  --series-4: #7a6852;
+  --series-5: #8c2430;
+  --series-6: #5e503f;
+  --series-7: #a9927d;
+  --series-8: #0a0908;
 
-  --status-good: #0ca30c;
-  --status-warning: #fab219;
-  --status-serious: #ec835a;
-  --status-critical: #d03b3b;
-  --status-neutral: #898781;
+  --status-good: #5c2a44;
+  --status-warning: #8c5a2e;
+  --status-serious: #7a3b24;
+  --status-critical: #8c2430;
+  --status-neutral: #7a6852;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:where(:not([data-theme="light"])) {
     color-scheme: dark;
-    --surface-1: #1a1a19;
-    --surface-2: #0d0d0d;
-    --text-primary: #ffffff;
-    --text-secondary: #c3c2b7;
-    --text-muted: #898781;
-    --gridline: #2c2c2a;
-    --baseline: #383835;
-    --border-hairline: rgba(255, 255, 255, 0.1);
+    --surface-1: #171210;
+    --surface-2: #0a0908;
+    --text-primary: #f2f4f3;
+    --text-secondary: #a9927d;
+    --text-muted: #92806c;
+    --gridline: #2a2018;
+    --baseline: #3d2f23;
+    --border-hairline: rgba(242, 244, 243, 0.12);
+    --on-accent: #ffffff;
 
-    --series-1: #3987e5;
-    --series-2: #d95926;
-    --series-3: #199e70;
-    --series-4: #c98500;
-    --series-5: #d55181;
-    --series-6: #008300;
-    --series-7: #9085e9;
-    --series-8: #e66767;
+    --series-1: #a13a4a;
+    --series-2: #c68a4a;
+    --series-3: #c9647a;
+    --series-4: #a9927d;
+    --series-5: #de5a4e;
+    --series-6: #92806c;
+    --series-7: #8c6478;
+    --series-8: #f2f4f3;
+
+    --status-good: #c9647a;
+    --status-warning: #c68a4a;
+    --status-serious: #d2734a;
+    --status-critical: #de5a4e;
+    --status-neutral: #a9927d;
   }
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --surface-1: #ffffff;
+  --surface-2: #f2f4f3;
+  --text-primary: #0a0908;
+  --text-secondary: #5e503f;
+  --text-muted: #7a6852;
+  --gridline: #e5dacd;
+  --baseline: #c9b6a0;
+  --border-hairline: rgba(10, 9, 8, 0.1);
+  --on-accent: #ffffff;
+
+  --series-1: #49111c;
+  --series-2: #8c5a2e;
+  --series-3: #5c2a44;
+  --series-4: #7a6852;
+  --series-5: #8c2430;
+  --series-6: #5e503f;
+  --series-7: #a9927d;
+  --series-8: #0a0908;
+
+  --status-good: #5c2a44;
+  --status-warning: #8c5a2e;
+  --status-serious: #7a3b24;
+  --status-critical: #8c2430;
+  --status-neutral: #7a6852;
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --surface-1: #1a1a19;
-  --surface-2: #0d0d0d;
-  --text-primary: #ffffff;
-  --text-secondary: #c3c2b7;
-  --text-muted: #898781;
-  --gridline: #2c2c2a;
-  --baseline: #383835;
-  --border-hairline: rgba(255, 255, 255, 0.1);
+  --surface-1: #171210;
+  --surface-2: #0a0908;
+  --text-primary: #f2f4f3;
+  --text-secondary: #a9927d;
+  --text-muted: #92806c;
+  --gridline: #2a2018;
+  --baseline: #3d2f23;
+  --border-hairline: rgba(242, 244, 243, 0.12);
+  --on-accent: #ffffff;
 
-  --series-1: #3987e5;
-  --series-2: #d95926;
-  --series-3: #199e70;
-  --series-4: #c98500;
-  --series-5: #d55181;
-  --series-6: #008300;
-  --series-7: #9085e9;
-  --series-8: #e66767;
+  --series-1: #a13a4a;
+  --series-2: #c68a4a;
+  --series-3: #c9647a;
+  --series-4: #a9927d;
+  --series-5: #de5a4e;
+  --series-6: #92806c;
+  --series-7: #8c6478;
+  --series-8: #f2f4f3;
+
+  --status-good: #c9647a;
+  --status-warning: #c68a4a;
+  --status-serious: #d2734a;
+  --status-critical: #de5a4e;
+  --status-neutral: #a9927d;
 }
 
 @theme {
@@ -79,6 +130,7 @@
   --color-text-muted: var(--text-muted);
   --color-gridline: var(--gridline);
   --color-baseline: var(--baseline);
+  --color-on-accent: var(--on-accent);
 
   --color-series-1: var(--series-1);
   --color-series-2: var(--series-2);
@@ -95,7 +147,8 @@
   --color-status-critical: var(--status-critical);
   --color-status-neutral: var(--status-neutral);
 
-  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 body {
@@ -105,4 +158,32 @@ body {
   background-color: var(--surface-2);
   color: var(--text-primary);
   font-family: var(--font-sans);
+}
+
+/* La marca es negra sobre fondo transparente; en modo oscuro se invierte a blanco. */
+.brand-logo {
+  filter: none;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) .brand-logo {
+    filter: invert(1);
+  }
+}
+:root[data-theme="dark"] .brand-logo {
+  filter: invert(1);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--series-1);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

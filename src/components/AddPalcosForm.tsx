@@ -11,12 +11,12 @@ const schema = z
     cantidad: z.coerce.number().int().min(1, "Debe ser al menos 1"),
     capacidad: z.coerce.number().int().min(1, "Requerido"),
     precio: z.coerce.number().min(0, "Requerido"),
-    vendiblePorBoleta: z.boolean(),
-    precioBoleta: z.coerce.number().min(0).default(0),
+    numeracion: z.enum(["auto", "manual"]),
+    numeroInicial: z.coerce.number().int().min(1).default(1),
   })
-  .refine((v) => !v.vendiblePorBoleta || v.precioBoleta > 0, {
-    message: "Indica el precio por boleta",
-    path: ["precioBoleta"],
+  .refine((v) => v.numeracion !== "manual" || v.numeroInicial > 0, {
+    message: "Indica en qué número empiezan los palcos nuevos",
+    path: ["numeroInicial"],
   });
 
 export type AddPalcosFormValues = z.output<typeof schema>;
@@ -40,12 +40,12 @@ export function AddPalcosForm({ localidad, onClose, onSubmit }: AddPalcosFormPro
     defaultValues: {
       capacidad: localidad.palcosConfig.capacidadPorPalco || undefined,
       precio: localidad.palcosConfig.precio || undefined,
-      vendiblePorBoleta: false,
-      precioBoleta: 0,
+      numeracion: "auto",
+      numeroInicial: 1,
     },
   });
 
-  const vendiblePorBoleta = watch("vendiblePorBoleta");
+  const numeracion = watch("numeracion");
 
   async function submit(values: AddPalcosFormValues) {
     setError(null);
@@ -59,10 +59,7 @@ export function AddPalcosForm({ localidad, onClose, onSubmit }: AddPalcosFormPro
 
   return (
     <Modal title={`Agregar palcos a ${localidad.nombre}`} onClose={onClose}>
-      <p className="mb-4 text-sm text-text-muted">
-        Actualmente tiene {localidad.palcosConfig.cantidad} palcos. Los nuevos se numerarán a
-        continuación.
-      </p>
+      <p className="mb-4 text-sm text-text-muted">Actualmente tiene {localidad.palcosConfig.cantidad} palcos.</p>
       <form onSubmit={handleSubmit(submit)} className="space-y-4">
         <FormField label="Cantidad de palcos nuevos" error={errors.cantidad?.message}>
           <input type="number" min={1} className={inputClass} {...register("cantidad")} />
@@ -73,15 +70,30 @@ export function AddPalcosForm({ localidad, onClose, onSubmit }: AddPalcosFormPro
         <FormField label="Precio (COP)" error={errors.precio?.message}>
           <input type="number" min={0} className={inputClass} {...register("precio")} />
         </FormField>
-        <label className="flex items-center gap-2 text-sm font-medium text-text-primary">
-          <input type="checkbox" {...register("vendiblePorBoleta")} />
-          También se pueden vender por boleta suelta (asiento por asiento)
-        </label>
-        {vendiblePorBoleta && (
-          <FormField label="Precio por boleta (COP)" error={errors.precioBoleta?.message}>
-            <input type="number" min={0} className={inputClass} {...register("precioBoleta")} />
-          </FormField>
-        )}
+
+        <div>
+          <span className="mb-1.5 block text-sm font-medium text-text-secondary">
+            Numeración de los palcos nuevos
+          </span>
+          <div className="flex flex-col gap-1.5 text-sm text-text-primary sm:flex-row sm:gap-4">
+            <label className="flex items-center gap-1.5">
+              <input type="radio" value="auto" {...register("numeracion")} />
+              Automática — continúa desde el último palco del evento
+            </label>
+            <label className="flex items-center gap-1.5">
+              <input type="radio" value="manual" {...register("numeracion")} />
+              Elegir número inicial
+            </label>
+          </div>
+          {numeracion === "manual" && (
+            <div className="mt-2">
+              <FormField label="Empezar en el número" error={errors.numeroInicial?.message}>
+                <input type="number" min={1} className={inputClass} {...register("numeroInicial")} />
+              </FormField>
+            </div>
+          )}
+        </div>
+
         {error && <p className="text-sm text-status-critical">{error}</p>}
         <div className="flex justify-end gap-2 pt-2">
           <button type="button" onClick={onClose} className={buttonSecondaryClass}>

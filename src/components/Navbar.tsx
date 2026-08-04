@@ -9,49 +9,58 @@ export function Navbar() {
   const evento = eventId ? events.find((e) => e.id === eventId) : undefined;
 
   const tabClass = ({ isActive }: { isActive: boolean }) =>
-    `whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ${
-      isActive ? "bg-series-1 text-white" : "text-text-secondary hover:bg-surface-2"
+    `whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium ${
+      isActive ? "bg-series-1 text-on-accent" : "text-text-secondary hover:bg-surface-2"
     }`;
 
   return (
     <header className="border-b border-gridline bg-surface-1">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
-        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
-          <NavLink to="/" className="shrink-0 text-lg font-bold text-text-primary">
-            Valhalla Eventos
-          </NavLink>
-          {eventId && (
-            <>
-              <span className="hidden text-text-muted sm:inline" aria-hidden="true">
-                /
-              </span>
-              <span
-                className="max-w-[16rem] truncate text-sm font-medium text-text-secondary"
-                title={evento?.nombre}
-              >
-                {evento?.nombre ?? "Cargando..."}
-              </span>
-              <nav className="flex gap-1">
-                <NavLink to={`/eventos/${eventId}`} end className={tabClass}>
-                  Dashboard
-                </NavLink>
-                <NavLink to={`/eventos/${eventId}/localidades`} className={tabClass}>
-                  Localidades
-                </NavLink>
-              </nav>
-            </>
-          )}
-        </div>
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
+        <NavLink to="/" className="shrink-0">
+          <img src="/logo.png" alt="Valhalla Eventos" className="brand-logo h-7 w-auto" />
+        </NavLink>
         <div className="flex items-center gap-3">
           {user && <span className="hidden text-sm text-text-muted sm:inline">{user.email}</span>}
           <button
             onClick={() => logout()}
-            className="rounded-md px-3 py-1.5 text-sm font-medium text-text-secondary hover:bg-surface-2"
+            className="rounded-lg px-3 py-1.5 text-sm font-medium text-text-secondary hover:bg-surface-2"
           >
             Salir
           </button>
         </div>
       </div>
+
+      {eventId && (
+        <div className="border-t border-gridline">
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2.5">
+            <div className="flex min-w-0 items-center gap-x-2">
+              <NavLink
+                to="/"
+                className="shrink-0 rounded-lg px-2 py-1 text-sm font-medium text-text-secondary hover:bg-surface-2"
+              >
+                Eventos
+              </NavLink>
+              <span className="shrink-0 text-text-muted" aria-hidden="true">
+                /
+              </span>
+              <span
+                className="max-w-[9rem] truncate text-sm font-medium text-text-secondary sm:max-w-[16rem]"
+                title={evento?.nombre}
+              >
+                {evento?.nombre ?? "Cargando..."}
+              </span>
+            </div>
+            <nav className="flex gap-1 sm:ml-auto">
+              <NavLink to={`/eventos/${eventId}`} end className={tabClass}>
+                Dashboard
+              </NavLink>
+              <NavLink to={`/eventos/${eventId}/localidades`} className={tabClass}>
+                Localidades
+              </NavLink>
+            </nav>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

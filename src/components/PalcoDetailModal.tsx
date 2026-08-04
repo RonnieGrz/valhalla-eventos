@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { saldoPendiente } from "../lib/estado";
 import { formatCOP } from "../lib/format";
 import {
+  actualizarVendiblePorBoleta,
   agregarAbonoPalco,
+  editarAbonoPalco,
   liberarPalco,
   listenPalcoBoletaSales,
   listenPalcoPayments,
@@ -15,6 +17,7 @@ import { ConfirmDialog } from "./ConfirmDialog";
 import { EstadoBadge } from "./EstadoBadge";
 import { Modal } from "./Modal";
 import { PalcoBoletaSaleDetailModal } from "./PalcoBoletaSaleDetailModal";
+import { PalcoBoletaSettingsForm } from "./PalcoBoletaSettingsForm";
 import { PaymentForm } from "./PaymentForm";
 import { PaymentHistoryList } from "./PaymentHistoryList";
 import { PaymentProgress } from "./PaymentProgress";
@@ -40,6 +43,9 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
   const [confirmLiberar, setConfirmLiberar] = useState(false);
   const [liberando, setLiberando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
 
   useEffect(() => {
     if (palco.estado === "disponible") return;
@@ -54,14 +60,37 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
   const selectedSale = boletaSales.find((s) => s.id === selectedSaleId) ?? null;
   const esModoBoletaSuelta = palco.vendiblePorBoleta && palco.comprador === null && palco.boletasVendidas > 0;
 
-  // --- Palco disponible: si admite boleta suelta, hay que elegir cómo venderlo ---
+  // --- Palco disponible: se puede decidir aquí si además admite boleta suelta ---
   if (palco.estado === "disponible") {
-    if (!palco.vendiblePorBoleta) {
-      return (
-        <Modal title={`Palco ${palco.numero}`} onClose={onClose}>
-          <p className="mb-4 text-sm text-text-secondary">
-            Capacidad {palco.capacidad} · Precio {formatCOP(palco.precio)}
-          </p>
+    return (
+      <Modal title={`Palco ${palco.numero}`} onClose={onClose}>
+        <p className="mb-4 text-sm text-text-secondary">
+          Capacidad {palco.capacidad} · Precio {formatCOP(palco.precio)}
+          {palco.vendiblePorBoleta && ` · Boleta suelta ${formatCOP(palco.precioBoleta)} c/u`}
+        </p>
+
+        <PalcoBoletaSettingsForm
+          vendiblePorBoleta={palco.vendiblePorBoleta}
+          precioBoleta={palco.precioBoleta}
+          onSubmit={async (values) => {
+            setSettingsError(null);
+            try {
+              await actualizarVendiblePorBoleta(
+                eventId,
+                localityId,
+                palco.id,
+                values.vendiblePorBoleta,
+                values.precioBoleta,
+              );
+              if (!values.vendiblePorBoleta) setVentaMode("elegir");
+            } catch (e) {
+              setSettingsError(e instanceof Error ? e.message : "No se pudo actualizar");
+            }
+          }}
+        />
+        {settingsError && <p className="mb-4 text-sm text-status-critical">{settingsError}</p>}
+
+        {!palco.vendiblePorBoleta ? (
           <ReservarPalcoForm
             palco={palco}
             onCancel={onClose}
@@ -82,74 +111,66 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
               }
             }}
           />
-          {error && <p className="mt-3 text-sm text-status-critical">{error}</p>}
-        </Modal>
-      );
-    }
+        ) : (
+          <>
+            {ventaMode === "elegir" && (
+              <div className="flex flex-col gap-2">
+                <button onClick={() => setVentaMode("completo")} className={buttonPrimaryClass}>
+                  Reservar palco completo
+                </button>
+                <button onClick={() => setVentaMode("boletas")} className={buttonSecondaryClass}>
+                  Vender boletas sueltas de este palco
+                </button>
+              </div>
+            )}
 
-    return (
-      <Modal title={`Palco ${palco.numero}`} onClose={onClose}>
-        <p className="mb-4 text-sm text-text-secondary">
-          Capacidad {palco.capacidad} · Palco completo {formatCOP(palco.precio)} · Boleta suelta{" "}
-          {formatCOP(palco.precioBoleta)} c/u
-        </p>
+            {ventaMode === "completo" && (
+              <ReservarPalcoForm
+                palco={palco}
+                onCancel={() => setVentaMode("elegir")}
+                onSubmit={async (values) => {
+                  setError(null);
+                  try {
+                    await reservarPalco(
+                      eventId,
+                      localityId,
+                      palco.id,
+                      { nombre: values.nombre, cedula: values.cedula, telefono: values.telefono },
+                      { monto: values.monto, fecha: values.fecha, metodo: values.metodo, nota: values.nota ?? "" },
+                      palco.precio,
+                    );
+                    onClose();
+                  } catch (e) {
+                    setError(e instanceof Error ? e.message : "No se pudo reservar el palco");
+                  }
+                }}
+              />
+            )}
 
-        {ventaMode === "elegir" && (
-          <div className="flex flex-col gap-2">
-            <button onClick={() => setVentaMode("completo")} className={buttonPrimaryClass}>
-              Reservar palco completo
-            </button>
-            <button onClick={() => setVentaMode("boletas")} className={buttonSecondaryClass}>
-              Vender boletas sueltas de este palco
-            </button>
-          </div>
-        )}
-
-        {ventaMode === "completo" && (
-          <ReservarPalcoForm
-            palco={palco}
-            onCancel={() => setVentaMode("elegir")}
-            onSubmit={async (values) => {
-              setError(null);
-              try {
-                await reservarPalco(
-                  eventId,
-                  localityId,
-                  palco.id,
-                  { nombre: values.nombre, cedula: values.cedula, telefono: values.telefono },
-                  { monto: values.monto, fecha: values.fecha, metodo: values.metodo, nota: values.nota ?? "" },
-                  palco.precio,
-                );
-                onClose();
-              } catch (e) {
-                setError(e instanceof Error ? e.message : "No se pudo reservar el palco");
-              }
-            }}
-          />
-        )}
-
-        {ventaMode === "boletas" && (
-          <VentaBoletasForm
-            precioUnitario={palco.precioBoleta}
-            aforoRestante={palco.capacidad - palco.boletasVendidas}
-            onCancel={() => setVentaMode("elegir")}
-            onSubmit={async (values) => {
-              setError(null);
-              try {
-                await venderBoletaPalco(
-                  eventId,
-                  localityId,
-                  palco.id,
-                  { nombre: values.nombre, cedula: values.cedula, telefono: values.telefono },
-                  values.cantidad,
-                  { monto: values.monto, fecha: values.fecha, metodo: values.metodo, nota: values.nota ?? "" },
-                );
-                onClose();
-              } catch (e) {
-                setError(e instanceof Error ? e.message : "No se pudo registrar la venta");
-              }
-            }}
-          />
+            {ventaMode === "boletas" && (
+              <VentaBoletasForm
+                precioUnitario={palco.precioBoleta}
+                aforoRestante={palco.capacidad - palco.boletasVendidas}
+                onCancel={() => setVentaMode("elegir")}
+                onSubmit={async (values) => {
+                  setError(null);
+                  try {
+                    await venderBoletaPalco(
+                      eventId,
+                      localityId,
+                      palco.id,
+                      { nombre: values.nombre, cedula: values.cedula, telefono: values.telefono },
+                      values.cantidad,
+                      { monto: values.monto, fecha: values.fecha, metodo: values.metodo, nota: values.nota ?? "" },
+                    );
+                    onClose();
+                  } catch (e) {
+                    setError(e instanceof Error ? e.message : "No se pudo registrar la venta");
+                  }
+                }}
+              />
+            )}
+          </>
         )}
 
         {error && <p className="mt-3 text-sm text-status-critical">{error}</p>}
@@ -288,8 +309,34 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
 
       <div>
         <h3 className="mb-2 text-sm font-semibold text-text-primary">Historial de abonos</h3>
-        <PaymentHistoryList payments={payments} />
+        <PaymentHistoryList payments={payments} onEdit={setEditingPayment} />
       </div>
+
+      {editingPayment && (
+        <Modal title="Editar abono" onClose={() => setEditingPayment(null)}>
+          <PaymentForm
+            saldoPendiente={pendiente}
+            submitLabel="Guardar cambios"
+            initialValues={{
+              monto: editingPayment.monto,
+              fecha: editingPayment.fecha,
+              metodo: editingPayment.metodo,
+              nota: editingPayment.nota,
+            }}
+            onCancel={() => setEditingPayment(null)}
+            onSubmit={async (values) => {
+              setEditError(null);
+              try {
+                await editarAbonoPalco(eventId, localityId, palco.id, editingPayment.id, values, palco.precio);
+                setEditingPayment(null);
+              } catch (e) {
+                setEditError(e instanceof Error ? e.message : "No se pudo editar el abono");
+              }
+            }}
+          />
+          {editError && <p className="mt-3 text-sm text-status-critical">{editError}</p>}
+        </Modal>
+      )}
 
       {confirmLiberar && (
         <ConfirmDialog

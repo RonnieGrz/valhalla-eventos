@@ -15,17 +15,21 @@ const schema = z.object({
 export type EventFormValues = z.infer<typeof schema>;
 
 interface EventFormProps {
+  /** Presente en modo edición: precarga el formulario con un evento existente. */
+  initialValues?: EventFormValues;
   onClose: () => void;
   onSubmit: (values: EventFormValues) => Promise<void>;
 }
 
-export function EventForm({ onClose, onSubmit }: EventFormProps) {
+export function EventForm({ initialValues, onClose, onSubmit }: EventFormProps) {
   const [error, setError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<EventFormValues>({ resolver: zodResolver(schema) });
+  } = useForm<EventFormValues>({ resolver: zodResolver(schema), defaultValues: initialValues });
+
+  const isEditing = Boolean(initialValues);
 
   async function submit(values: EventFormValues) {
     setError(null);
@@ -33,12 +37,12 @@ export function EventForm({ onClose, onSubmit }: EventFormProps) {
       await onSubmit(values);
       onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudo crear el evento");
+      setError(e instanceof Error ? e.message : "No se pudo guardar el evento");
     }
   }
 
   return (
-    <Modal title="Nuevo evento" onClose={onClose}>
+    <Modal title={isEditing ? "Editar evento" : "Nuevo evento"} onClose={onClose}>
       <form onSubmit={handleSubmit(submit)} className="space-y-4">
         <FormField label="Nombre del evento" error={errors.nombre?.message}>
           <input className={inputClass} {...register("nombre")} />
@@ -58,7 +62,7 @@ export function EventForm({ onClose, onSubmit }: EventFormProps) {
             Cancelar
           </button>
           <button type="submit" disabled={isSubmitting} className={buttonPrimaryClass}>
-            Crear evento
+            {isEditing ? "Guardar cambios" : "Crear evento"}
           </button>
         </div>
       </form>

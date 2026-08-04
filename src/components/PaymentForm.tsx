@@ -2,14 +2,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { todayISO } from "../lib/format";
+import type { MetodoPago } from "../types";
 import { buttonPrimaryClass, buttonSecondaryClass, FormField, inputClass } from "./form/FormField";
 
-function buildSchema(saldoPendiente: number) {
+function buildSchema(montoMaximo: number) {
   return z.object({
     monto: z.coerce
       .number()
       .min(1, "Debe ser mayor a 0")
-      .max(saldoPendiente, `No puede superar el saldo pendiente (${saldoPendiente})`),
+      .max(montoMaximo, `No puede superar ${montoMaximo}`),
     fecha: z.string().min(1, "Requerido"),
     metodo: z.enum(["efectivo", "transferencia", "tarjeta"]),
     nota: z.string().optional().default(""),
@@ -19,26 +20,45 @@ function buildSchema(saldoPendiente: number) {
 type PaymentFormInput = z.input<ReturnType<typeof buildSchema>>;
 export type PaymentFormValues = z.output<ReturnType<typeof buildSchema>>;
 
+interface PaymentFormInitialValues {
+  monto: number;
+  fecha: string;
+  metodo: MetodoPago;
+  nota: string;
+}
+
 interface PaymentFormProps {
+  /** Saldo aún no cubierto por ningún abono (sin contar el que se está editando, si aplica). */
   saldoPendiente: number;
   submitLabel: string;
+  /** Presente en modo edición: precarga el formulario con un abono existente. */
+  initialValues?: PaymentFormInitialValues;
   onCancel: () => void;
   onSubmit: (values: PaymentFormValues) => Promise<void>;
 }
 
-export function PaymentForm({ saldoPendiente, submitLabel, onCancel, onSubmit }: PaymentFormProps) {
+export function PaymentForm({
+  saldoPendiente,
+  submitLabel,
+  initialValues,
+  onCancel,
+  onSubmit,
+}: PaymentFormProps) {
+  // Al editar, este abono ya está contado en el saldo pendiente actual del padre,
+  // así que el tope real es el saldo más lo que este abono ya aportaba.
+  const montoMaximo = saldoPendiente + (initialValues?.monto ?? 0);
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<PaymentFormInput, unknown, PaymentFormValues>({
-    resolver: zodResolver(buildSchema(saldoPendiente)),
-    defaultValues: { fecha: todayISO(), metodo: "efectivo", monto: 0 },
+    resolver: zodResolver(buildSchema(montoMaximo)),
+    defaultValues: initialValues ?? { fecha: todayISO(), metodo: "efectivo", monto: 0 },
   });
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-      <FormField label={`Monto (saldo pendiente: ${saldoPendiente})`} error={errors.monto?.message}>
+      <FormField label={`Monto (máximo: ${montoMaximo})`} error={errors.monto?.message}>
         <input type="number" min={0} className={inputClass} {...register("monto")} />
       </FormField>
       <div className="grid grid-cols-2 gap-3">

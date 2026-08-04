@@ -10,7 +10,7 @@ import {
 import { db } from "../firebase/config";
 import { computeEstado } from "../lib/estado";
 import type { BoletaSale, BoletaSaleDoc, Comprador, Payment, PaymentDoc } from "../types";
-import { boletaSaleRef, registrarAbono, type NuevoAbono } from "./payments";
+import { boletaSaleRef, editarAbono, paymentRef, registrarAbono, type NuevoAbono } from "./payments";
 
 function salesCol(eventId: string, localityId: string) {
   return collection(db, "events", eventId, "localities", localityId, "boletaSales");
@@ -124,4 +124,17 @@ export async function agregarAbonoVenta(
     abono,
     montoTotal,
   );
+}
+
+/** Edita un abono ya registrado sobre una venta de boletas sueltas de una localidad. */
+export async function editarAbonoVenta(
+  eventId: string,
+  localityId: string,
+  saleId: string,
+  paymentId: string,
+  cambios: NuevoAbono,
+  montoTotal: number,
+) {
+  const ref = boletaSaleRef(eventId, localityId, saleId);
+  await editarAbono(ref, paymentRef(ref, paymentId), cambios, montoTotal);
 }

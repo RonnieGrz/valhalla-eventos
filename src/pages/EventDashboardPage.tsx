@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { Navbar } from "../components/Navbar";
 import { PalcoEstadoChart } from "../components/dashboard/PalcoEstadoChart";
 import { RecaudoTimelineChart } from "../components/dashboard/RecaudoTimelineChart";
@@ -54,7 +54,23 @@ export function EventDashboardPage() {
     <div className="min-h-screen bg-surface-2">
       <Navbar />
       <main className="mx-auto max-w-6xl px-4 py-8">
-        <h1 className="mb-6 text-2xl font-bold text-text-primary">Dashboard</h1>
+        <h1 className="mb-6 font-display text-2xl font-bold text-text-primary">Dashboard</h1>
+
+        <Link
+          to={`/eventos/${eventId}/localidades`}
+          className="group mb-8 flex flex-col items-start gap-3 rounded-xl border border-gridline border-l-4 border-l-series-1 bg-surface-1 p-5 shadow-sm transition hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div>
+            <p className="font-display text-lg font-semibold text-text-primary">Palcos y boletas</p>
+            <p className="text-sm text-text-secondary">
+              Entra a las localidades para ver reservas, vender boletas y registrar abonos.
+            </p>
+          </div>
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-series-1 px-4 py-2 text-sm font-medium text-on-accent transition group-hover:opacity-90">
+            Ver localidades
+            <span aria-hidden="true">→</span>
+          </span>
+        </Link>
 
         {loading && <p className="text-text-muted">Cargando datos del evento...</p>}
 

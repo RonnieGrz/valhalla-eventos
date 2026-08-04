@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { saldoPendiente } from "../lib/estado";
-import { agregarAbonoBoletaPalco, listenPalcoBoletaSalePayments } from "../services/palcos";
+import {
+  agregarAbonoBoletaPalco,
+  editarAbonoBoletaPalco,
+  listenPalcoBoletaSalePayments,
+} from "../services/palcos";
 import type { PalcoBoletaSale, Payment } from "../types";
 import { EstadoBadge } from "./EstadoBadge";
 import { Modal } from "./Modal";
@@ -27,6 +31,8 @@ export function PalcoBoletaSaleDetailModal({
   const [payments, setPayments] = useState<Payment[]>([]);
   const [mode, setMode] = useState<"view" | "abonar">("view");
   const [error, setError] = useState<string | null>(null);
+  const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
 
   useEffect(
     () => listenPalcoBoletaSalePayments(eventId, localityId, palcoId, sale.id, setPayments),
@@ -80,8 +86,42 @@ export function PalcoBoletaSaleDetailModal({
 
       <div>
         <h3 className="mb-2 text-sm font-semibold text-text-primary">Historial de abonos</h3>
-        <PaymentHistoryList payments={payments} />
+        <PaymentHistoryList payments={payments} onEdit={setEditingPayment} />
       </div>
+
+      {editingPayment && (
+        <Modal title="Editar abono" onClose={() => setEditingPayment(null)}>
+          <PaymentForm
+            saldoPendiente={pendiente}
+            submitLabel="Guardar cambios"
+            initialValues={{
+              monto: editingPayment.monto,
+              fecha: editingPayment.fecha,
+              metodo: editingPayment.metodo,
+              nota: editingPayment.nota,
+            }}
+            onCancel={() => setEditingPayment(null)}
+            onSubmit={async (values) => {
+              setEditError(null);
+              try {
+                await editarAbonoBoletaPalco(
+                  eventId,
+                  localityId,
+                  palcoId,
+                  sale.id,
+                  editingPayment.id,
+                  values,
+                  sale.montoTotal,
+                );
+                setEditingPayment(null);
+              } catch (e) {
+                setEditError(e instanceof Error ? e.message : "No se pudo editar el abono");
+              }
+            }}
+          />
+          {editError && <p className="mt-3 text-sm text-status-critical">{editError}</p>}
+        </Modal>
+      )}
     </Modal>
   );
 }

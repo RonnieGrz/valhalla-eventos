@@ -6,9 +6,10 @@ import { Navbar } from "../components/Navbar";
 import { PalcoDetailModal } from "../components/PalcoDetailModal";
 import { PalcoGrid } from "../components/PalcoGrid";
 import { VentaBoletasForm } from "../components/VentaBoletasForm";
-import { buttonPrimaryClass } from "../components/form/FormField";
+import { buttonPrimaryClass, inputClass } from "../components/form/FormField";
 import { Modal } from "../components/Modal";
 import { aforoRestante } from "../lib/estado";
+import { palcoMatchesQuery, ventaMatchesQuery } from "../lib/search";
 import { useLocalities } from "../hooks/useLocalities";
 import { useLocalityDetail } from "../hooks/useLocalityDetail";
 import { crearVentaBoletas } from "../services/boletaSales";
@@ -21,6 +22,7 @@ export function LocalityDetailPage() {
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
   const [showVentaForm, setShowVentaForm] = useState(false);
   const [ventaError, setVentaError] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
 
   const localidad = localities.find((l) => l.id === localityId);
   // Se re-deriva de la lista en vivo (no de una copia guardada) para que el modal
@@ -31,6 +33,8 @@ export function LocalityDetailPage() {
   if (!eventId || !localityId) return null;
 
   const restante = localidad ? aforoRestante(localidad.boletasConfig.aforo, boletaSales) : 0;
+  const filteredPalcos = palcos.filter((p) => palcoMatchesQuery(p, query));
+  const filteredSales = boletaSales.filter((s) => ventaMatchesQuery(s, query));
 
   return (
     <div className="min-h-screen bg-surface-2">
@@ -42,22 +46,41 @@ export function LocalityDetailPage() {
         >
           ← Localidades
         </Link>
-        <h1 className="mb-6 text-2xl font-bold text-text-primary">
+        <h1 className="mb-6 font-display text-2xl font-bold text-text-primary">
           {localidad?.nombre ?? "Localidad"}
         </h1>
 
         {loading && <p className="text-text-muted">Cargando...</p>}
 
+        {!loading &&
+          localidad &&
+          (localidad.palcosConfig.cantidad > 0 || localidad.boletasConfig.aforo > 0) && (
+            <div className="mb-6">
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Buscar por número de palco, cédula o nombre del comprador"
+                className={inputClass}
+                aria-label="Buscar palco o venta de boletas"
+              />
+            </div>
+          )}
+
         {!loading && localidad && localidad.palcosConfig.cantidad > 0 && (
           <section className="mb-8">
             <h2 className="mb-3 text-lg font-semibold text-text-primary">Palcos</h2>
-            <PalcoGrid palcos={palcos} onSelect={(p) => setSelectedPalcoId(p.id)} />
+            {query && filteredPalcos.length === 0 ? (
+              <p className="text-sm text-text-muted">Ningún palco coincide con "{query}".</p>
+            ) : (
+              <PalcoGrid palcos={filteredPalcos} onSelect={(p) => setSelectedPalcoId(p.id)} />
+            )}
           </section>
         )}
 
         {!loading && localidad && localidad.boletasConfig.aforo > 0 && (
           <section>
-            <div className="mb-3 flex items-center justify-between">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-lg font-semibold text-text-primary">
                 Boletas sueltas · {restante} disponibles
               </h2>
@@ -69,7 +92,13 @@ export function LocalityDetailPage() {
                 + Vender boletas
               </button>
             </div>
-            <BoletaSaleList sales={boletaSales} onSelect={(s) => setSelectedSaleId(s.id)} />
+            {query && filteredSales.length === 0 ? (
+              <p className="text-sm text-text-muted">
+                Ninguna venta coincide con "{query}".
+              </p>
+            ) : (
+              <BoletaSaleList sales={filteredSales} onSelect={(s) => setSelectedSaleId(s.id)} />
+            )}
           </section>
         )}
       </main>

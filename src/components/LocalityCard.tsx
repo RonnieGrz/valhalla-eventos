@@ -14,14 +14,14 @@ export function LocalityCard({ eventId, localidad, onAddPalcos, onDelete }: Loca
   const { palcosConfig, boletasConfig } = localidad;
 
   return (
-    <div className="rounded-xl border border-gridline bg-surface-1 p-5 shadow-sm">
+    <div className="rounded-xl border border-gridline bg-surface-1 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <h3 className="min-w-0 flex-1 truncate text-lg font-semibold text-text-primary">
+        <h3 className="min-w-0 flex-1 truncate font-display text-lg font-semibold text-text-primary">
           {localidad.nombre}
         </h3>
         <button
           onClick={onDelete}
-          className="shrink-0 rounded-md px-2 py-1.5 text-sm font-medium text-status-critical hover:bg-status-critical/10"
+          className="shrink-0 rounded-lg px-2 py-1.5 text-sm font-medium text-status-critical hover:bg-status-critical/10"
         >
           Eliminar
         </button>
@@ -45,7 +45,7 @@ export function LocalityCard({ eventId, localidad, onAddPalcos, onDelete }: Loca
       <div className="flex flex-wrap gap-2">
         <Link
           to={`/eventos/${eventId}/localidades/${localidad.id}`}
-          className="rounded-md bg-series-1 px-3 py-1.5 text-sm font-medium text-white hover:opacity-90"
+          className="rounded-lg bg-series-1 px-3 py-1.5 text-sm font-medium text-on-accent hover:opacity-90"
         >
           Ver palcos y boletas
         </Link>

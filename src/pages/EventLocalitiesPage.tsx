@@ -43,8 +43,8 @@ export function EventLocalitiesPage() {
     <div className="min-h-screen bg-surface-2">
       <Navbar />
       <main className="mx-auto max-w-6xl px-4 py-8">
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-text-primary">Localidades</h1>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
+          <h1 className="font-display text-2xl font-bold text-text-primary">Localidades</h1>
           <button onClick={() => setShowForm(true)} className={buttonPrimaryClass}>
             + Nueva localidad
           </button>
@@ -106,10 +106,9 @@ export function EventLocalitiesPage() {
                   precioUnitario: values.tieneBoletas ? values.boletasPrecio : 0,
                 },
               },
-              {
-                vendiblePorBoleta: values.tienePalcos ? values.palcosVendiblesPorBoleta : false,
-                precioBoleta: values.tienePalcos ? values.palcosPrecioBoleta : 0,
-              },
+              values.tienePalcos && values.palcosNumeracion === "manual"
+                ? values.palcosNumeroInicial
+                : undefined,
             );
           }}
         />
@@ -126,8 +125,7 @@ export function EventLocalitiesPage() {
               values.cantidad,
               values.capacidad,
               values.precio,
-              values.vendiblePorBoleta,
-              values.precioBoleta,
+              values.numeracion === "manual" ? values.numeroInicial : undefined,
             );
           }}
         />

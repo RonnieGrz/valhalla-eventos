@@ -7,7 +7,12 @@ const metodoLabel: Record<Payment["metodo"], string> = {
   tarjeta: "Tarjeta",
 };
 
-export function PaymentHistoryList({ payments }: { payments: Payment[] }) {
+interface PaymentHistoryListProps {
+  payments: Payment[];
+  onEdit?: (payment: Payment) => void;
+}
+
+export function PaymentHistoryList({ payments, onEdit }: PaymentHistoryListProps) {
   if (payments.length === 0) {
     return <p className="text-sm text-text-muted">Sin abonos registrados aún.</p>;
   }
@@ -15,14 +20,23 @@ export function PaymentHistoryList({ payments }: { payments: Payment[] }) {
   return (
     <ul className="divide-y divide-gridline">
       {payments.map((p) => (
-        <li key={p.id} className="flex items-center justify-between py-2 text-sm">
-          <div>
+        <li key={p.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+          <div className="min-w-0">
             <p className="font-medium text-text-primary">{formatCOP(p.monto)}</p>
             <p className="text-text-muted">
               {formatFecha(p.fecha)} · {metodoLabel[p.metodo]}
               {p.nota ? ` · ${p.nota}` : ""}
             </p>
           </div>
+          {onEdit && (
+            <button
+              type="button"
+              onClick={() => onEdit(p)}
+              className="shrink-0 rounded-lg px-3 py-2 text-sm font-medium text-series-1 hover:bg-surface-2"
+            >
+              Editar
+            </button>
+          )}
         </li>
       ))}
     </ul>

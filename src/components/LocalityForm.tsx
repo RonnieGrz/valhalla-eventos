@@ -12,8 +12,8 @@ const schema = z
     palcosCantidad: z.coerce.number().int().min(0).default(0),
     palcosCapacidad: z.coerce.number().int().min(0).default(0),
     palcosPrecio: z.coerce.number().min(0).default(0),
-    palcosVendiblesPorBoleta: z.boolean(),
-    palcosPrecioBoleta: z.coerce.number().min(0).default(0),
+    palcosNumeracion: z.enum(["auto", "manual"]),
+    palcosNumeroInicial: z.coerce.number().int().min(1).default(1),
     tieneBoletas: z.boolean(),
     boletasAforo: z.coerce.number().int().min(0).default(0),
     boletasPrecio: z.coerce.number().min(0).default(0),
@@ -26,9 +26,9 @@ const schema = z
     message: "Indica la capacidad por palco",
     path: ["palcosCapacidad"],
   })
-  .refine((v) => !v.tienePalcos || !v.palcosVendiblesPorBoleta || v.palcosPrecioBoleta > 0, {
-    message: "Indica el precio por boleta",
-    path: ["palcosPrecioBoleta"],
+  .refine((v) => !v.tienePalcos || v.palcosNumeracion !== "manual" || v.palcosNumeroInicial > 0, {
+    message: "Indica en qué número empiezan los palcos",
+    path: ["palcosNumeroInicial"],
   })
   .refine((v) => !v.tieneBoletas || v.boletasAforo > 0, {
     message: "Indica el aforo de boletas sueltas",
@@ -62,8 +62,8 @@ export function LocalityForm({ onClose, onSubmit }: LocalityFormProps) {
       palcosCantidad: 0,
       palcosCapacidad: 0,
       palcosPrecio: 0,
-      palcosVendiblesPorBoleta: false,
-      palcosPrecioBoleta: 0,
+      palcosNumeracion: "auto",
+      palcosNumeroInicial: 1,
       boletasAforo: 0,
       boletasPrecio: 0,
     },
@@ -71,7 +71,7 @@ export function LocalityForm({ onClose, onSubmit }: LocalityFormProps) {
 
   const tienePalcos = watch("tienePalcos");
   const tieneBoletas = watch("tieneBoletas");
-  const palcosVendiblesPorBoleta = watch("palcosVendiblesPorBoleta");
+  const palcosNumeracion = watch("palcosNumeracion");
 
   async function submit(values: LocalityFormValues) {
     setError(null);
@@ -108,15 +108,42 @@ export function LocalityForm({ onClose, onSubmit }: LocalityFormProps) {
                   <input type="number" min={0} className={inputClass} {...register("palcosPrecio")} />
                 </FormField>
               </div>
-              <label className="flex items-center gap-2 text-sm font-medium text-text-primary">
-                <input type="checkbox" {...register("palcosVendiblesPorBoleta")} />
-                También se pueden vender por boleta suelta (asiento por asiento)
-              </label>
-              {palcosVendiblesPorBoleta && (
-                <FormField label="Precio por boleta (COP)" error={errors.palcosPrecioBoleta?.message}>
-                  <input type="number" min={0} className={inputClass} {...register("palcosPrecioBoleta")} />
-                </FormField>
-              )}
+
+              <div>
+                <span className="mb-1.5 block text-sm font-medium text-text-secondary">
+                  Numeración de los palcos
+                </span>
+                <div className="flex flex-col gap-1.5 text-sm text-text-primary sm:flex-row sm:gap-4">
+                  <label className="flex items-center gap-1.5">
+                    <input type="radio" value="auto" {...register("palcosNumeracion")} />
+                    Automática — continúa desde el último palco del evento
+                  </label>
+                  <label className="flex items-center gap-1.5">
+                    <input type="radio" value="manual" {...register("palcosNumeracion")} />
+                    Elegir número inicial
+                  </label>
+                </div>
+                {palcosNumeracion === "manual" && (
+                  <div className="mt-2">
+                    <FormField
+                      label="Empezar en el número"
+                      error={errors.palcosNumeroInicial?.message}
+                    >
+                      <input
+                        type="number"
+                        min={1}
+                        className={inputClass}
+                        {...register("palcosNumeroInicial")}
+                      />
+                    </FormField>
+                  </div>
+                )}
+              </div>
+
+              <p className="text-sm text-text-muted">
+                Si un palco en particular también se puede vender por boleta suelta (asiento por
+                asiento), esa opción se activa después, abriendo ese palco.
+              </p>
             </div>
           )}
         </div>

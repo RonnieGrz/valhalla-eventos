@@ -36,8 +36,8 @@ export function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface-2 px-4">
       <div className="w-full max-w-sm rounded-xl border border-gridline bg-surface-1 p-6 shadow-sm">
-        <h1 className="mb-1 text-xl font-bold text-text-primary">Valhalla Eventos</h1>
-        <p className="mb-5 text-sm text-text-muted">Ingresa con tu cuenta del equipo</p>
+        <img src="/logo.png" alt="Valhalla Eventos" className="brand-logo mb-4 h-9 w-auto" />
+        <p className="mb-6 text-sm text-text-muted">Ingresa con tu cuenta del equipo</p>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <FormField label="Correo" error={errors.email?.message}>
             <input type="email" className={inputClass} {...register("email")} />

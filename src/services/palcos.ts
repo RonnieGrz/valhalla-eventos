@@ -17,7 +17,7 @@ import type {
   Payment,
   PaymentDoc,
 } from "../types";
-import { palcoRef, registrarAbono, type NuevoAbono } from "./payments";
+import { editarAbono, palcoRef, paymentRef, registrarAbono, type NuevoAbono } from "./payments";
 
 function palcoBoletaSalesCol(eventId: string, localityId: string, palcoId: string) {
   return collection(
@@ -132,6 +132,46 @@ export async function agregarAbonoPalco(
   precio: number,
 ) {
   await registrarAbono(palcoRef(eventId, localityId, palcoId), eventId, localityId, abono, precio);
+}
+
+/** Edita un abono ya registrado sobre un palco reservado completo. */
+export async function editarAbonoPalco(
+  eventId: string,
+  localityId: string,
+  palcoId: string,
+  paymentId: string,
+  cambios: NuevoAbono,
+  precio: number,
+) {
+  const ref = palcoRef(eventId, localityId, palcoId);
+  await editarAbono(ref, paymentRef(ref, paymentId), cambios, precio);
+}
+
+/**
+ * Habilita o deshabilita la venta por boleta suelta (asiento por asiento) de un palco puntual.
+ * Solo se puede cambiar mientras el palco sigue disponible (nada vendido ni reservado todavía).
+ */
+export async function actualizarVendiblePorBoleta(
+  eventId: string,
+  localityId: string,
+  palcoId: string,
+  vendiblePorBoleta: boolean,
+  precioBoleta: number,
+) {
+  const ref = palcoRef(eventId, localityId, palcoId);
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) throw new Error("El palco ya no existe");
+    const data = snap.data() as PalcoDoc;
+    if (data.estado !== "disponible") {
+      throw new Error("Solo se puede cambiar esta opción mientras el palco está disponible");
+    }
+    tx.update(ref, {
+      vendiblePorBoleta,
+      precioBoleta: vendiblePorBoleta ? precioBoleta : 0,
+      updatedAt: Date.now(),
+    });
+  });
 }
 
 /** Libera un palco (solo permitido si no tiene abonos ni boletas sueltas vendidas). */
@@ -313,6 +353,64 @@ export async function agregarAbonoBoletaPalco(
     });
 
     const nuevoPalcoMontoAbonado = palco.montoAbonado + abono.monto;
+    tx.update(palcoDocRef, {
+      montoAbonado: nuevoPalcoMontoAbonado,
+      estado: computeEstadoPalcoBoleta(
+        palco.boletasVendidas,
+        palco.capacidad,
+        nuevoPalcoMontoAbonado,
+        palco.precioBoleta,
+      ),
+      updatedAt: Date.now(),
+    });
+  });
+}
+
+/**
+ * Edita un abono ya registrado sobre una venta de boletas sueltas dentro de un palco:
+ * corrige el agregado tanto de la venta como del palco por la diferencia de monto.
+ */
+export async function editarAbonoBoletaPalco(
+  eventId: string,
+  localityId: string,
+  palcoId: string,
+  saleId: string,
+  paymentId: string,
+  cambios: NuevoAbono,
+  montoTotalVenta: number,
+) {
+  const palcoDocRef = palcoRef(eventId, localityId, palcoId);
+  const saleRef = doc(palcoBoletaSalesCol(eventId, localityId, palcoId), saleId);
+  const paymentDocRef = paymentRef(saleRef, paymentId);
+
+  await runTransaction(db, async (tx) => {
+    const palcoSnap = await tx.get(palcoDocRef);
+    const saleSnap = await tx.get(saleRef);
+    const paymentSnap = await tx.get(paymentDocRef);
+    if (!palcoSnap.exists()) throw new Error("El palco ya no existe");
+    if (!saleSnap.exists()) throw new Error("El registro ya no existe");
+    if (!paymentSnap.exists()) throw new Error("El abono ya no existe");
+
+    const palco = palcoSnap.data() as PalcoDoc;
+    const montoAnterior = (paymentSnap.data().monto as number) ?? 0;
+    const saleMontoAbonadoActual = (saleSnap.data().montoAbonado as number) ?? 0;
+    const delta = cambios.monto - montoAnterior;
+    const nuevoSaleMontoAbonado = saleMontoAbonadoActual + delta;
+
+    tx.update(paymentDocRef, {
+      monto: cambios.monto,
+      fecha: cambios.fecha,
+      metodo: cambios.metodo,
+      nota: cambios.nota,
+    });
+
+    tx.update(saleRef, {
+      montoAbonado: nuevoSaleMontoAbonado,
+      estado: computeEstado(nuevoSaleMontoAbonado, montoTotalVenta),
+      updatedAt: Date.now(),
+    });
+
+    const nuevoPalcoMontoAbonado = palco.montoAbonado + delta;
     tx.update(palcoDocRef, {
       montoAbonado: nuevoPalcoMontoAbonado,
       estado: computeEstadoPalcoBoleta(
