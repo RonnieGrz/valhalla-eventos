@@ -17,7 +17,7 @@ export function FormField({ label, error, children }: FormFieldProps) {
     : children;
 
   return (
-    <label className="block">
+    <label className="block min-w-0">
       <span className="mb-1 block text-sm font-medium text-text-secondary">{label}</span>
       {field}
       {error && (
