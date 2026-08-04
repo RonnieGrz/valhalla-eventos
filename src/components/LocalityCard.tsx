@@ -21,7 +21,7 @@ export function LocalityCard({ eventId, localidad, onAddPalcos, onDelete }: Loca
         </h3>
         <button
           onClick={onDelete}
-          className="shrink-0 rounded-lg px-2 py-1.5 text-sm font-medium text-status-critical hover:bg-status-critical/10"
+          className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-2 py-1.5 text-sm font-medium text-status-critical transition duration-150 ease-out-strong hover:bg-status-critical/10 active:scale-[0.97]"
         >
           Eliminar
         </button>
@@ -45,12 +45,15 @@ export function LocalityCard({ eventId, localidad, onAddPalcos, onDelete }: Loca
       <div className="flex flex-wrap gap-2">
         <Link
           to={`/eventos/${eventId}/localidades/${localidad.id}`}
-          className="rounded-lg bg-series-1 px-3 py-1.5 text-sm font-medium text-on-accent hover:opacity-90"
+          className="inline-flex min-h-11 items-center rounded-lg bg-series-1 px-3 py-1.5 text-sm font-medium text-on-accent transition duration-150 ease-out-strong hover:opacity-90 active:scale-[0.97]"
         >
           Ver palcos y boletas
         </Link>
         {palcosConfig.cantidad > 0 && (
-          <button onClick={onAddPalcos} className={`${buttonSecondaryClass} px-3 py-1.5 text-sm`}>
+          <button
+            onClick={onAddPalcos}
+            className={`${buttonSecondaryClass} inline-flex min-h-11 items-center px-3 py-1.5 text-sm`}
+          >
             + Agregar palcos
           </button>
         )}

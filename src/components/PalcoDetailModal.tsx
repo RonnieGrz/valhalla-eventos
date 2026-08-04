@@ -277,7 +277,7 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
           <button
             type="button"
             onClick={() => setEditingComprador(true)}
-            className="shrink-0 rounded-lg px-2 py-1 text-sm font-medium text-series-1 hover:bg-surface-2"
+            className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-2 py-1 text-sm font-medium text-series-1 transition duration-150 ease-out-strong hover:bg-surface-2 active:scale-[0.97]"
           >
             Cambiar datos
           </button>

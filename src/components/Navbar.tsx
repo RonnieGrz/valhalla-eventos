@@ -9,7 +9,7 @@ export function Navbar() {
   const evento = eventId ? events.find((e) => e.id === eventId) : undefined;
 
   const tabClass = ({ isActive }: { isActive: boolean }) =>
-    `whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium ${
+    `inline-flex min-h-11 items-center whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-colors duration-150 ${
       isActive ? "bg-series-1 text-on-accent" : "text-text-secondary hover:bg-surface-2"
     }`;
 
@@ -23,7 +23,7 @@ export function Navbar() {
           {user && <span className="hidden text-sm text-text-muted sm:inline">{user.email}</span>}
           <button
             onClick={() => logout()}
-            className="rounded-lg px-3 py-1.5 text-sm font-medium text-text-secondary hover:bg-surface-2"
+            className="inline-flex min-h-11 items-center rounded-lg px-3 py-1.5 text-sm font-medium text-text-secondary transition-colors duration-150 hover:bg-surface-2"
           >
             Salir
           </button>
@@ -36,7 +36,7 @@ export function Navbar() {
             <div className="flex min-w-0 items-center gap-x-2">
               <NavLink
                 to="/"
-                className="shrink-0 rounded-lg px-2 py-1 text-sm font-medium text-text-secondary hover:bg-surface-2"
+                className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-2 py-1 text-sm font-medium text-text-secondary transition-colors duration-150 hover:bg-surface-2"
               >
                 Eventos
               </NavLink>

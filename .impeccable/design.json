@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-04T00:00:00.000Z",
+  "title": "Design System: Valhalla Eventos",
+  "extensions": {
+    "colorMeta": {
+      "wine": { "role": "primary", "displayName": "Wine", "canonical": "#49111c", "tonalRamp": ["#3a121a", "#611e2b", "#882a3d", "#af364e", "#c95067", "#d57789", "#e7b1bc", "#f9ecee"] },
+      "plum": { "role": "status-good", "displayName": "Plum", "canonical": "#5c2a44", "tonalRamp": ["#321a27", "#542c41", "#763d5a", "#974e74", "#b1688e", "#c289a7", "#dcbccd", "#f6eef2"] },
+      "amber": { "role": "status-warning", "displayName": "Amber", "canonical": "#8c5a2e", "tonalRamp": ["#372516", "#5b3e24", "#805733", "#a47041", "#be895b", "#cca37f", "#e2cbb6", "#f8f2ed"] },
+      "ember": { "role": "status-critical", "displayName": "Ember", "canonical": "#8c2430", "tonalRamp": ["#391317", "#602027", "#862c37", "#ac3946", "#c65360", "#d37983", "#e6b2b8", "#f9eced"] },
+      "rust": { "role": "status-serious", "displayName": "Rust", "canonical": "#7a3b24", "tonalRamp": ["#381e15", "#5d3222", "#834630", "#a85a3e", "#c17457", "#cf937c", "#e4c1b4", "#f8f0ec"] },
+      "tan": { "role": "chart-series", "displayName": "Tan", "canonical": "#a9927d", "tonalRamp": ["#2d2620", "#4b3f35", "#69594a", "#87725f", "#a08b78", "#b5a596", "#d5ccc3", "#f4f2f0"] },
+      "ink": { "role": "text-primary", "displayName": "Ink", "canonical": "#0a0908", "tonalRamp": ["#2a2622", "#464039", "#625950", "#7e7367", "#988c81", "#afa69d", "#d1ccc7", "#f4f2f1"] },
+      "umber": { "role": "text-secondary", "displayName": "Umber", "canonical": "#5e503f", "tonalRamp": ["#2d2720", "#4a4135", "#685b4a", "#86755f", "#a08e79", "#b5a797", "#d5cdc3", "#f4f2f0"] },
+      "clay": { "role": "text-muted", "displayName": "Clay", "canonical": "#7a6852", "tonalRamp": ["#2d2720", "#4a4135", "#685b4a", "#867560", "#9f8e79", "#b5a797", "#d5cdc4", "#f4f2f0"] },
+      "hairline": { "role": "border", "displayName": "Hairline", "canonical": "#e5dacd" },
+      "baseline": { "role": "chart-axis", "displayName": "Baseline", "canonical": "#c9b6a0" },
+      "surface-page": { "role": "surface", "displayName": "Surface Page", "canonical": "#f2f4f3" },
+      "surface-card": { "role": "surface", "displayName": "Surface Card", "canonical": "#ffffff" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display / Space Grotesk", "purpose": "Page titles, section/card/modal headers, stat values. Never body copy." },
+      "body": { "displayName": "Body / Plus Jakarta Sans", "purpose": "Everything else: labels, table cells, form fields, running copy." }
+    },
+    "shadows": [
+      { "name": "resting-card", "value": "0 1px 2px 0 rgba(0,0,0,0.05)", "purpose": "Default shadow-sm on every card-like surface." },
+      { "name": "hover-lift", "value": "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1)", "purpose": "Hover response on interactive cards, paired with a 2px upward translate." },
+      { "name": "modal", "value": "0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)", "purpose": "The one place real depth appears; separates the modal from the page behind it." }
+    ],
+    "motion": [
+      { "name": "ease-out-strong", "value": "cubic-bezier(0.23, 1, 0.32, 1)", "purpose": "Default easing for all interactive transitions: button press, hover, modal enter, progress bar fill." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main call-to-action button (submit forms, confirm actions).",
+      "html": "<button class=\"ds-btn-primary\">Guardar</button>",
+      "css": ".ds-btn-primary { background: #49111c; color: #ffffff; padding: 8px 16px; border-radius: 8px; border: none; font-weight: 500; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; transition: transform 150ms cubic-bezier(0.23,1,0.32,1), opacity 150ms cubic-bezier(0.23,1,0.32,1); } .ds-btn-primary:hover { opacity: 0.9; } .ds-btn-primary:active { transform: scale(0.97); } .ds-btn-primary:focus-visible { outline: 2px solid #49111c; outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Neutral action button (cancel, secondary actions).",
+      "html": "<button class=\"ds-btn-secondary\">Cancelar</button>",
+      "css": ".ds-btn-secondary { background: #ffffff; color: #0a0908; padding: 8px 16px; border-radius: 8px; border: 1px solid #e5dacd; font-weight: 500; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; transition: background-color 150ms cubic-bezier(0.23,1,0.32,1), transform 150ms cubic-bezier(0.23,1,0.32,1); } .ds-btn-secondary:hover { background: #f2f4f3; } .ds-btn-secondary:active { transform: scale(0.97); }"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Destructive action button (delete event, delete locality).",
+      "html": "<button class=\"ds-btn-danger\">Eliminar</button>",
+      "css": ".ds-btn-danger { background: transparent; color: #8c2430; padding: 8px 16px; border-radius: 8px; border: 1px solid #8c2430; font-weight: 500; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; transition: background-color 150ms cubic-bezier(0.23,1,0.32,1), transform 150ms cubic-bezier(0.23,1,0.32,1); } .ds-btn-danger:hover { background: rgba(140,36,48,0.1); } .ds-btn-danger:active { transform: scale(0.97); }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-default",
+      "description": "Standard form field (buyer name, cédula, teléfono, amounts).",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Nombre completo\" />",
+      "css": ".ds-input { width: 100%; background: #ffffff; color: #0a0908; border: 1px solid #e5dacd; border-radius: 8px; padding: 8px 12px; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 14px; outline: none; transition: border-color 150ms ease, box-shadow 150ms ease; } .ds-input:focus { border-color: #49111c; box-shadow: 0 0 0 1px #49111c; }"
+    },
+    {
+      "name": "Status Badge",
+      "kind": "chip",
+      "refersTo": "badge",
+      "description": "Pill showing sale state: disponible, separado, or vendido.",
+      "html": "<span class=\"ds-badge ds-badge--vendido\">Vendido</span>",
+      "css": ".ds-badge { display: inline-block; border-radius: 9999px; padding: 2px 8px; font-size: 12px; font-weight: 500; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; } .ds-badge--disponible { background: rgba(122,104,82,0.15); color: #7a6852; } .ds-badge--separado { background: rgba(140,90,46,0.2); color: #8c5a2e; } .ds-badge--vendido { background: rgba(92,42,68,0.15); color: #5c2a44; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Event/locality card: title, meta rows, action buttons.",
+      "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">Concierto de Verano</h3><p class=\"ds-card-meta\">Teatro Metropolitano</p><p class=\"ds-card-meta ds-card-meta--muted\">15 de agosto, 2026</p></div>",
+      "css": ".ds-card { background: #ffffff; border: 1px solid #e5dacd; border-radius: 12px; padding: 20px; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); transition: transform 150ms cubic-bezier(0.4,0,0.2,1), box-shadow 150ms cubic-bezier(0.4,0,0.2,1); } .ds-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); } .ds-card-title { font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 18px; font-weight: 600; color: #0a0908; margin: 0 0 8px; } .ds-card-meta { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 14px; color: #5e503f; margin: 0; } .ds-card-meta--muted { color: #7a6852; }"
+    },
+    {
+      "name": "Nav Tab",
+      "kind": "nav",
+      "refersTo": "nav-tab",
+      "description": "Section tab in the event sub-header (Dashboard / Localidades).",
+      "html": "<div class=\"ds-nav\"><a class=\"ds-nav-tab ds-nav-tab--active\">Dashboard</a><a class=\"ds-nav-tab\">Localidades</a></div>",
+      "css": ".ds-nav { display: flex; gap: 4px; } .ds-nav-tab { padding: 6px 12px; border-radius: 8px; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 14px; font-weight: 500; color: #5e503f; text-decoration: none; cursor: pointer; transition: background-color 150ms ease; } .ds-nav-tab:hover { background: #f2f4f3; } .ds-nav-tab--active { background: #49111c; color: #ffffff; }"
+    },
+    {
+      "name": "Payment Progress",
+      "kind": "custom",
+      "refersTo": "payment-progress",
+      "description": "Signature component: shows amount paid vs. total, with the balance remaining below.",
+      "html": "<div class=\"ds-progress\"><div class=\"ds-progress-label\"><span>Abonado $700.000 de $1.000.000</span><span class=\"ds-progress-pct\">70%</span></div><div class=\"ds-progress-track\"><div class=\"ds-progress-fill\" style=\"width: 70%\"></div></div><p class=\"ds-progress-balance\">Saldo pendiente: $300.000</p></div>",
+      "css": ".ds-progress { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; } .ds-progress-label { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 4px; } .ds-progress-label span:first-child { color: #5e503f; } .ds-progress-pct { font-weight: 500; color: #0a0908; } .ds-progress-track { height: 8px; width: 100%; border-radius: 9999px; background: #f2f4f3; overflow: hidden; } .ds-progress-fill { height: 100%; border-radius: 9999px; background: #5c2a44; transition: width 300ms cubic-bezier(0.23,1,0.32,1); } .ds-progress-balance { margin-top: 4px; font-size: 14px; color: #7a6852; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Velvet Ledger",
+    "overview": "Valhalla Eventos runs box-office operations for live-music events: staff selling palcos and boletas simultaneously, tracking partial payments, watching a shared ledger update in real time. The visual system is an opulent, wine-dark account book — precise numbers dressed in gothic romance, never the other way around. This is Operate mode, not marketing: the gothic-romantic identity lives in restrained, deliberate details (one wine-red accent, a display typeface reserved for structure, a palette that never uses pure black or pure gray), while the actual working surface — tables, grids, forms, running totals — stays scannable, flat, and fast under sales-window pressure.\n\nThe system explicitly rejects two failure modes: the generic SaaS admin dashboard (purple-to-blue gradients, cards nested in cards, Inter-everywhere sameness) and nightlife-cliché neon (anything loud, glowing, or discotheque-coded). What's left is closer to a ledger bound in leather than a screen full of widgets: dark ink, warm earth neutrals, hairline rules instead of heavy chrome, and exactly one accent color doing all the pointing.",
+    "keyCharacteristics": [
+      "One accent color (wine #49111c) carries every interactive and brand cue; nothing else competes with it.",
+      "Flat surfaces at rest, hairline borders instead of shadow as the default separator.",
+      "A single earthy palette family does double duty as UI neutrals, chart series, and status colors — nothing is a one-off.",
+      "Display type (Space Grotesk) marks structure only: page titles, card/modal headers, stat values. Everything else reads in Plus Jakarta Sans.",
+      "Full light/dark theming via CSS custom properties, with the same roles and relationships preserved in both."
+    ],
+    "rules": [
+      { "name": "The One Voice Rule", "body": "Wine appears only where the interface wants a click or wants to say \"this is the brand\" — never as a large fill, never decoratively. Its rarity is what makes it read as intentional.", "section": "colors" },
+      { "name": "The No Pure Black Rule", "body": "Ink and every dark surface carry a warm brown undertone, never #000000 or a cool gray. Flatness comes from restraint, not from defaulting to grayscale.", "section": "colors" },
+      { "name": "The Typeface-Switch Rule", "body": "Emphasis is expressed by switching from body to display type, not by scaling body type up. A \"big number\" is always set in Space Grotesk at 700, never Plus Jakarta Sans at a larger size.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "Shadow only appears as a response to state (hover) or to establish real z-order (modal). A card that isn't hovered or floating has no shadow beyond the barely-there resting value.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep Wine as the only accent used for interactive/brand cues. If a second UI color is needed, pull from the existing status/data palette rather than introducing a new hue.",
+      "Do default new surfaces to flat + hairline border; add shadow-sm only if the surface is genuinely card-like, shadow-md/lift only as a hover response.",
+      "Do set structural moments (page titles, section headers, stat values) in Space Grotesk; everything else in Plus Jakarta Sans.",
+      "Do use the --ease-out-strong curve and 150-300ms durations for interactive feedback (button press, hover, modal enter).",
+      "Do keep Spanish domain vocabulary in UI copy (palco, boleta, localidad, abono, comprador) — this is a durable product/brand commitment, not just a language choice."
+    ],
+    "donts": [
+      "Don't introduce pure black (#000000) or a cool/neutral gray anywhere — every dark value in this system carries a warm brown undertone.",
+      "Don't reach for a second accent color, a gradient, or neon/glow treatments — they read as off-brand for a gothic-romance ledger, not just \"bold.\"",
+      "Don't stack cards inside cards, or add shadow to a surface that isn't hovered or floating (modal). Depth here is earned, not decorative."
+    ]
+  }
+}

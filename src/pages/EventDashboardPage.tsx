@@ -58,7 +58,7 @@ export function EventDashboardPage() {
 
         <Link
           to={`/eventos/${eventId}/localidades`}
-          className="group mb-8 flex flex-col items-start gap-3 rounded-xl border border-gridline border-l-4 border-l-series-1 bg-surface-1 p-5 shadow-sm transition hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
+          className="group mb-8 flex flex-col items-start gap-3 rounded-xl border border-gridline bg-surface-1 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
         >
           <div>
             <p className="font-display text-lg font-semibold text-text-primary">Palcos y boletas</p>

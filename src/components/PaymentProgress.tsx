@@ -21,7 +21,7 @@ export function PaymentProgress({
       </div>
       <div className="h-2 w-full overflow-hidden rounded-full bg-surface-2">
         <div
-          className="h-full rounded-full bg-status-good transition-all"
+          className="h-full rounded-full bg-status-good transition-[width] duration-300 ease-out-strong"
           style={{ width: `${pct}%` }}
         />
       </div>

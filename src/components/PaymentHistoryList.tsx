@@ -32,7 +32,7 @@ export function PaymentHistoryList({ payments, onEdit }: PaymentHistoryListProps
             <button
               type="button"
               onClick={() => onEdit(p)}
-              className="shrink-0 rounded-lg px-3 py-2 text-sm font-medium text-series-1 hover:bg-surface-2"
+              className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-3 py-2 text-sm font-medium text-series-1 transition duration-150 ease-out-strong hover:bg-surface-2 active:scale-[0.97]"
             >
               Editar
             </button>

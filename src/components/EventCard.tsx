@@ -21,22 +21,22 @@ export function EventCard({ evento, onEdit, onDelete }: EventCardProps) {
           <span
             className={`rounded-full px-2 py-0.5 text-xs font-medium ${
               evento.estado === "activo"
-                ? "bg-status-good/15 text-status-good"
-                : "bg-status-neutral/15 text-status-neutral"
+                ? "bg-status-good/8 text-status-good"
+                : "bg-status-neutral/12 text-status-neutral"
             }`}
           >
             {evento.estado === "activo" ? "Activo" : "Finalizado"}
           </span>
           <button
             onClick={onEdit}
-            className="rounded-lg px-2 py-1.5 text-sm font-medium text-series-1 hover:bg-surface-2"
+            className="inline-flex min-h-11 items-center rounded-lg px-2 py-1.5 text-sm font-medium text-series-1 transition duration-150 ease-out-strong hover:bg-surface-2 active:scale-[0.97]"
             aria-label="Editar evento"
           >
             Editar
           </button>
           <button
             onClick={onDelete}
-            className="rounded-lg px-2 py-1.5 text-sm font-medium text-status-critical hover:bg-status-critical/10"
+            className="inline-flex min-h-11 items-center rounded-lg px-2 py-1.5 text-sm font-medium text-status-critical transition duration-150 ease-out-strong hover:bg-status-critical/10 active:scale-[0.97]"
             aria-label="Eliminar evento"
           >
             Eliminar

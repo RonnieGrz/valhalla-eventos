@@ -48,7 +48,7 @@ export function BoletaSaleList<S extends SaleListItem>({ sales, onSelect }: Bole
               tabIndex={0}
               role="button"
               aria-label={`Ver venta de ${sale.comprador.nombre}`}
-              className="cursor-pointer hover:bg-surface-2"
+              className="cursor-pointer transition-colors duration-150 hover:bg-surface-2"
             >
               <td className="px-3 py-2 text-text-primary">{sale.comprador.nombre}</td>
               <td className="px-3 py-2 text-text-secondary">{sale.cantidad}</td>

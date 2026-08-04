@@ -42,7 +42,7 @@ export function LocalityDetailPage() {
       <main className="mx-auto max-w-6xl px-4 py-8">
         <Link
           to={`/eventos/${eventId}/localidades`}
-          className="mb-2 inline-flex items-center gap-1 text-sm text-text-secondary hover:text-series-1"
+          className="mb-2 inline-flex items-center gap-1 text-sm text-text-secondary transition-colors duration-150 hover:text-series-1"
         >
           ← Localidades
         </Link>
