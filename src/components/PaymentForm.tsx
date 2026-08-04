@@ -61,7 +61,7 @@ export function PaymentForm({
       <FormField label={`Monto (máximo: ${montoMaximo})`} error={errors.monto?.message}>
         <input type="number" min={0} className={inputClass} {...register("monto")} />
       </FormField>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <FormField label="Fecha" error={errors.fecha?.message}>
           <input type="date" className={inputClass} {...register("fecha")} />
         </FormField>
