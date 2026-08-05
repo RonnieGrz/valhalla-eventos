@@ -153,6 +153,37 @@ export async function editarAbonoPalco(
 }
 
 /**
+ * Corrige el cupo (capacidad) de un palco puntual: puede subirse por encima del valor con el
+ * que se creó (p. ej. para permitir sillas extra en la venta por boleta suelta) o bajarse,
+ * siempre que no quede por debajo de las boletas ya vendidas. Si el palco está en modo boleta
+ * suelta, recalcula su estado agregado con el nuevo cupo.
+ */
+export async function editarCapacidadPalco(
+  eventId: string,
+  localityId: string,
+  palcoId: string,
+  nuevaCapacidad: number,
+) {
+  const ref = palcoRef(eventId, localityId, palcoId);
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) throw new Error("El palco ya no existe");
+    const data = snap.data() as PalcoDoc;
+    if (nuevaCapacidad < data.boletasVendidas) {
+      throw new Error(`Ya hay ${data.boletasVendidas} boletas vendidas; el cupo no puede ser menor`);
+    }
+    tx.update(ref, {
+      capacidad: nuevaCapacidad,
+      estado:
+        data.vendiblePorBoleta && data.boletasVendidas > 0
+          ? computeEstadoPalcoBoleta(data.boletasVendidas, nuevaCapacidad, data.montoAbonado, data.precioBoleta)
+          : data.estado,
+      updatedAt: Date.now(),
+    });
+  });
+}
+
+/**
  * Habilita o deshabilita la venta por boleta suelta (asiento por asiento) de un palco puntual.
  * Solo se puede cambiar mientras el palco sigue disponible (nada vendido ni reservado todavía).
  */

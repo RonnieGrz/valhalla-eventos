@@ -6,6 +6,7 @@ import {
   actualizarVendiblePorBoleta,
   agregarAbonoPalco,
   editarAbonoPalco,
+  editarCapacidadPalco,
   editarCompradorPalco,
   liberarPalco,
   listenPalcoBoletaSales,
@@ -17,6 +18,7 @@ import type { Palco, PalcoBoletaSale, Payment } from "../types";
 import { BoletaSaleList } from "./BoletaSaleList";
 import { CompradorForm } from "./CompradorForm";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { EditarCapacidadForm } from "./EditarCapacidadForm";
 import { EstadoBadge } from "./EstadoBadge";
 import { Modal } from "./Modal";
 import { PalcoBoletaSaleDetailModal } from "./PalcoBoletaSaleDetailModal";
@@ -54,6 +56,8 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
   const [compradorError, setCompradorError] = useState<string | null>(null);
   const [editingSillas, setEditingSillas] = useState(false);
   const [sillasError, setSillasError] = useState<string | null>(null);
+  const [editingCapacidad, setEditingCapacidad] = useState(false);
+  const [capacidadError, setCapacidadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (palco.estado === "disponible") return;
@@ -72,10 +76,19 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
   if (palco.estado === "disponible") {
     return (
       <Modal title={`Palco ${palco.numero}`} onClose={onClose}>
-        <p className="mb-4 text-sm text-text-secondary">
-          Capacidad {palco.capacidad} · Precio {formatCOP(palco.precio)}
-          {palco.vendiblePorBoleta && ` · Boleta suelta ${formatCOP(palco.precioBoleta)} c/u`}
-        </p>
+        <div className="mb-4 flex items-center justify-between gap-2 text-sm text-text-secondary">
+          <p>
+            Capacidad {palco.capacidad} · Precio {formatCOP(palco.precio)}
+            {palco.vendiblePorBoleta && ` · Boleta suelta ${formatCOP(palco.precioBoleta)} c/u`}
+          </p>
+          <button
+            type="button"
+            onClick={() => setEditingCapacidad(true)}
+            className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-2 py-1 text-sm font-medium text-series-1 transition duration-150 ease-out-strong hover:bg-surface-2 active:scale-[0.97]"
+          >
+            Editar cupo
+          </button>
+        </div>
 
         <PalcoBoletaSettingsForm
           vendiblePorBoleta={palco.vendiblePorBoleta}
@@ -182,6 +195,26 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
         )}
 
         {error && <p className="mt-3 text-sm text-status-critical">{error}</p>}
+
+        {editingCapacidad && (
+          <Modal title="Editar cupo del palco" onClose={() => setEditingCapacidad(false)}>
+            <EditarCapacidadForm
+              capacidadActual={palco.capacidad}
+              minCapacidad={palco.boletasVendidas}
+              onCancel={() => setEditingCapacidad(false)}
+              onSubmit={async (values) => {
+                setCapacidadError(null);
+                try {
+                  await editarCapacidadPalco(eventId, localityId, palco.id, values.capacidad);
+                  setEditingCapacidad(false);
+                } catch (e) {
+                  setCapacidadError(e instanceof Error ? e.message : "No se pudo actualizar el cupo");
+                }
+              }}
+            />
+            {capacidadError && <p className="mt-3 text-sm text-status-critical">{capacidadError}</p>}
+          </Modal>
+        )}
       </Modal>
     );
   }
@@ -192,11 +225,20 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
     return (
       <>
         <Modal title={`Palco ${palco.numero} · boletas sueltas`} onClose={onClose}>
-          <div className="mb-4 flex items-center gap-2">
-            <EstadoBadge estado={palco.estado} />
-            <span className="text-sm text-text-muted">
-              {palco.boletasVendidas} / {palco.capacidad} asientos vendidos
-            </span>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <EstadoBadge estado={palco.estado} />
+              <span className="text-sm text-text-muted">
+                {palco.boletasVendidas} / {palco.capacidad} asientos vendidos
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setEditingCapacidad(true)}
+              className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-2 py-1 text-sm font-medium text-series-1 transition duration-150 ease-out-strong hover:bg-surface-2 active:scale-[0.97]"
+            >
+              Editar cupo
+            </button>
           </div>
 
           <div className="mb-4">
@@ -258,6 +300,26 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
             onClose={() => setSelectedSaleId(null)}
           />
         )}
+
+        {editingCapacidad && (
+          <Modal title="Editar cupo del palco" onClose={() => setEditingCapacidad(false)}>
+            <EditarCapacidadForm
+              capacidadActual={palco.capacidad}
+              minCapacidad={palco.boletasVendidas}
+              onCancel={() => setEditingCapacidad(false)}
+              onSubmit={async (values) => {
+                setCapacidadError(null);
+                try {
+                  await editarCapacidadPalco(eventId, localityId, palco.id, values.capacidad);
+                  setEditingCapacidad(false);
+                } catch (e) {
+                  setCapacidadError(e instanceof Error ? e.message : "No se pudo actualizar el cupo");
+                }
+              }}
+            />
+            {capacidadError && <p className="mt-3 text-sm text-status-critical">{capacidadError}</p>}
+          </Modal>
+        )}
       </>
     );
   }
@@ -270,9 +332,18 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
 
   return (
     <Modal title={`Palco ${palco.numero}`} onClose={onClose}>
-      <div className="mb-4 flex items-center gap-2">
-        <EstadoBadge estado={palco.estado} />
-        <span className="text-sm text-text-muted">Capacidad {palco.capacidad}</span>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <EstadoBadge estado={palco.estado} />
+          <span className="text-sm text-text-muted">Capacidad {palco.capacidad}</span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setEditingCapacidad(true)}
+          className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-2 py-1 text-sm font-medium text-series-1 transition duration-150 ease-out-strong hover:bg-surface-2 active:scale-[0.97]"
+        >
+          Editar cupo
+        </button>
       </div>
 
       {palco.comprador && (
@@ -429,6 +500,26 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
             }}
           />
           {sillasError && <p className="mt-3 text-sm text-status-critical">{sillasError}</p>}
+        </Modal>
+      )}
+
+      {editingCapacidad && (
+        <Modal title="Editar cupo del palco" onClose={() => setEditingCapacidad(false)}>
+          <EditarCapacidadForm
+            capacidadActual={palco.capacidad}
+            minCapacidad={palco.boletasVendidas}
+            onCancel={() => setEditingCapacidad(false)}
+            onSubmit={async (values) => {
+              setCapacidadError(null);
+              try {
+                await editarCapacidadPalco(eventId, localityId, palco.id, values.capacidad);
+                setEditingCapacidad(false);
+              } catch (e) {
+                setCapacidadError(e instanceof Error ? e.message : "No se pudo actualizar el cupo");
+              }
+            }}
+          />
+          {capacidadError && <p className="mt-3 text-sm text-status-critical">{capacidadError}</p>}
         </Modal>
       )}
 
