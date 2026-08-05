@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Navbar } from "../components/Navbar";
 import { PalcoEstadoChart } from "../components/dashboard/PalcoEstadoChart";
@@ -7,8 +8,10 @@ import {
   VentasPorLocalidadChart,
   type VentasPorLocalidadDatum,
 } from "../components/dashboard/VentasPorLocalidadChart";
+import { buttonSecondaryClass } from "../components/form/FormField";
 import { useEventData } from "../hooks/useEventData";
 import { useEventPayments } from "../hooks/useEventPayments";
+import { useEvents } from "../hooks/useEvents";
 import {
   contarBoletasPorEstado,
   contarPalcosPorEstado,
@@ -21,8 +24,29 @@ export function EventDashboardPage() {
   const { localities, palcosByLocality, salesByLocality, allPalcos, allSales, loading } =
     useEventData(eventId);
   const { payments } = useEventPayments(eventId);
+  const { events } = useEvents();
+  const [descargando, setDescargando] = useState(false);
 
   if (!eventId) return null;
+
+  const evento = events.find((e) => e.id === eventId);
+
+  async function handleDescargarReporte() {
+    setDescargando(true);
+    try {
+      // Import dinámico: exceljs es pesado y solo se necesita al descargar el reporte,
+      // no en cada visita al Dashboard.
+      const { descargarReporteEvento } = await import("../lib/report");
+      await descargarReporteEvento({
+        eventoNombre: evento?.nombre ?? "evento",
+        localities,
+        palcosByLocality,
+        salesByLocality,
+      });
+    } finally {
+      setDescargando(false);
+    }
+  }
 
   const palcoStats = contarPalcosPorEstado(allPalcos);
   const boletaStats = contarBoletasPorEstado(allSales);
@@ -54,7 +78,18 @@ export function EventDashboardPage() {
     <div className="min-h-screen bg-surface-2">
       <Navbar />
       <main className="mx-auto max-w-6xl px-4 py-8">
-        <h1 className="mb-6 font-display text-2xl font-bold text-text-primary">Dashboard</h1>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <h1 className="font-display text-2xl font-bold text-text-primary">Dashboard</h1>
+          <button
+            type="button"
+            onClick={handleDescargarReporte}
+            disabled={descargando || loading}
+            className={`inline-flex min-h-11 items-center gap-2 ${buttonSecondaryClass}`}
+          >
+            <DownloadIcon className="h-4 w-4" />
+            {descargando ? "Generando..." : "Descargar reporte (Excel)"}
+          </button>
+        </div>
 
         <Link
           to={`/eventos/${eventId}/localidades`}
@@ -110,5 +145,24 @@ export function EventDashboardPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+function DownloadIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M8 2v8" />
+      <path d="M4.5 7.5L8 11l3.5-3.5" />
+      <path d="M2.5 12.5v1a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1" />
+    </svg>
   );
 }
