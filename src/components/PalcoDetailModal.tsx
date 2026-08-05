@@ -254,6 +254,7 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
             localityId={localityId}
             palcoId={palco.id}
             sale={selectedSale}
+            maxCantidad={palco.capacidad - palco.boletasVendidas + selectedSale.cantidad}
             onClose={() => setSelectedSaleId(null)}
           />
         )}

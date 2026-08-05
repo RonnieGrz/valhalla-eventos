@@ -376,6 +376,63 @@ export async function venderBoletaPalco(
   return saleRef;
 }
 
+/**
+ * Corrige la cantidad de boletas (sillas) compradas por un cliente dentro de una venta de
+ * boleta suelta ya registrada: ajusta el monto total de la venta y, en la misma transacción,
+ * el agregado (boletasVendidas/estado) del palco por la diferencia. No permite reducir la
+ * cantidad por debajo de lo ya abonado (hay que editar los abonos primero) ni superar el
+ * cupo restante del palco.
+ */
+export async function editarCantidadBoletaPalco(
+  eventId: string,
+  localityId: string,
+  palcoId: string,
+  saleId: string,
+  nuevaCantidad: number,
+) {
+  const palcoDocRef = palcoRef(eventId, localityId, palcoId);
+  const saleRef = doc(palcoBoletaSalesCol(eventId, localityId, palcoId), saleId);
+
+  await runTransaction(db, async (tx) => {
+    const palcoSnap = await tx.get(palcoDocRef);
+    const saleSnap = await tx.get(saleRef);
+    if (!palcoSnap.exists()) throw new Error("El palco ya no existe");
+    if (!saleSnap.exists()) throw new Error("El registro ya no existe");
+
+    const palco = palcoSnap.data() as PalcoDoc;
+    const sale = saleSnap.data() as PalcoBoletaSaleDoc;
+
+    const restanteSinEstaVenta = palco.capacidad - palco.boletasVendidas + sale.cantidad;
+    if (nuevaCantidad > restanteSinEstaVenta) {
+      throw new Error(`Solo hay cupo para ${restanteSinEstaVenta} boletas en este palco`);
+    }
+
+    const nuevoMontoTotal = nuevaCantidad * sale.precioUnitario;
+    if (sale.montoAbonado > nuevoMontoTotal) {
+      throw new Error("Ya se abonó más de lo que valdría esa cantidad; edita los abonos primero");
+    }
+
+    tx.update(saleRef, {
+      cantidad: nuevaCantidad,
+      montoTotal: nuevoMontoTotal,
+      estado: computeEstado(sale.montoAbonado, nuevoMontoTotal),
+      updatedAt: Date.now(),
+    });
+
+    const nuevoBoletasVendidas = palco.boletasVendidas - sale.cantidad + nuevaCantidad;
+    tx.update(palcoDocRef, {
+      boletasVendidas: nuevoBoletasVendidas,
+      estado: computeEstadoPalcoBoleta(
+        nuevoBoletasVendidas,
+        palco.capacidad,
+        palco.montoAbonado,
+        palco.precioBoleta,
+      ),
+      updatedAt: Date.now(),
+    });
+  });
+}
+
 /** Registra un abono sobre una venta de boletas sueltas de un palco y actualiza el agregado del palco. */
 export async function agregarAbonoBoletaPalco(
   eventId: string,

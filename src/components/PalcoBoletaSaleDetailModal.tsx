@@ -3,9 +3,11 @@ import { saldoPendiente } from "../lib/estado";
 import {
   agregarAbonoBoletaPalco,
   editarAbonoBoletaPalco,
+  editarCantidadBoletaPalco,
   listenPalcoBoletaSalePayments,
 } from "../services/palcos";
 import type { PalcoBoletaSale, Payment } from "../types";
+import { EditarCantidadBoletaForm } from "./EditarCantidadBoletaForm";
 import { EstadoBadge } from "./EstadoBadge";
 import { Modal } from "./Modal";
 import { PaymentForm } from "./PaymentForm";
@@ -18,6 +20,8 @@ interface PalcoBoletaSaleDetailModalProps {
   localityId: string;
   palcoId: string;
   sale: PalcoBoletaSale;
+  /** Cupo máximo que puede tener esta venta (cupo restante del palco + lo que ya tiene esta venta). */
+  maxCantidad: number;
   onClose: () => void;
 }
 
@@ -26,6 +30,7 @@ export function PalcoBoletaSaleDetailModal({
   localityId,
   palcoId,
   sale,
+  maxCantidad,
   onClose,
 }: PalcoBoletaSaleDetailModalProps) {
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -33,6 +38,8 @@ export function PalcoBoletaSaleDetailModal({
   const [error, setError] = useState<string | null>(null);
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
+  const [editingCantidad, setEditingCantidad] = useState(false);
+  const [cantidadError, setCantidadError] = useState<string | null>(null);
 
   useEffect(
     () => listenPalcoBoletaSalePayments(eventId, localityId, palcoId, sale.id, setPayments),
@@ -47,10 +54,20 @@ export function PalcoBoletaSaleDetailModal({
         <EstadoBadge estado={sale.estado} />
       </div>
 
-      <div className="mb-4 rounded-lg border border-gridline p-3 text-sm">
-        <p className="font-medium text-text-primary">{sale.comprador.nombre}</p>
-        <p className="text-text-secondary">CC {sale.comprador.cedula}</p>
-        <p className="text-text-secondary">{sale.comprador.telefono}</p>
+      <div className="mb-4 flex items-start justify-between gap-2 rounded-lg border border-gridline p-3 text-sm">
+        <div>
+          <p className="font-medium text-text-primary">{sale.comprador.nombre}</p>
+          <p className="text-text-secondary">CC {sale.comprador.cedula}</p>
+          <p className="text-text-secondary">{sale.comprador.telefono}</p>
+          <p className="mt-1 text-text-secondary">{sale.cantidad} silla(s)</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setEditingCantidad(true)}
+          className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-2 py-1 text-sm font-medium text-series-1 transition duration-150 ease-out-strong hover:bg-surface-2 active:scale-[0.97]"
+        >
+          Editar cantidad
+        </button>
       </div>
 
       <div className="mb-4">
@@ -120,6 +137,26 @@ export function PalcoBoletaSaleDetailModal({
             }}
           />
           {editError && <p className="mt-3 text-sm text-status-critical">{editError}</p>}
+        </Modal>
+      )}
+
+      {editingCantidad && (
+        <Modal title="Editar cantidad de sillas" onClose={() => setEditingCantidad(false)}>
+          <EditarCantidadBoletaForm
+            cantidadActual={sale.cantidad}
+            maxCantidad={maxCantidad}
+            onCancel={() => setEditingCantidad(false)}
+            onSubmit={async (values) => {
+              setCantidadError(null);
+              try {
+                await editarCantidadBoletaPalco(eventId, localityId, palcoId, sale.id, values.cantidad);
+                setEditingCantidad(false);
+              } catch (e) {
+                setCantidadError(e instanceof Error ? e.message : "No se pudo actualizar la cantidad");
+              }
+            }}
+          />
+          {cantidadError && <p className="mt-3 text-sm text-status-critical">{cantidadError}</p>}
         </Modal>
       )}
     </Modal>
