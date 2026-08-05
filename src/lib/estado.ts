@@ -39,12 +39,13 @@ export function computeEstadoPalcoBoleta(
   return completo ? "vendido" : "separado";
 }
 
-/** Monto comprometido de un palco: precio completo si se reservó entero, o asientos vendidos × precio por boleta. */
+/** Monto comprometido de un palco: precio completo (+ sillas adicionales) si se reservó entero, o asientos vendidos × precio por boleta. */
 export function montoComprometidoPalco(palco: Palco): number {
   if (palco.vendiblePorBoleta && palco.boletasVendidas > 0) {
     return palco.boletasVendidas * palco.precioBoleta;
   }
-  return palco.estado !== "disponible" ? palco.precio : 0;
+  if (palco.estado === "disponible") return 0;
+  return palco.precio + palco.sillasAdicionalesVendidas * palco.precioSillaAdicional;
 }
 
 export function contarPalcosPorEstado(palcos: Palco[]) {

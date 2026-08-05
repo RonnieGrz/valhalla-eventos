@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { saldoPendiente } from "../lib/estado";
 import { formatCOP } from "../lib/format";
 import {
+  actualizarSillasAdicionalesPalco,
   actualizarVendiblePorBoleta,
   agregarAbonoPalco,
   editarAbonoPalco,
@@ -24,6 +25,7 @@ import { PaymentForm } from "./PaymentForm";
 import { PaymentHistoryList } from "./PaymentHistoryList";
 import { PaymentProgress } from "./PaymentProgress";
 import { ReservarPalcoForm } from "./ReservarPalcoForm";
+import { SillasAdicionalesForm } from "./SillasAdicionalesForm";
 import { VentaBoletasForm } from "./VentaBoletasForm";
 import { buttonDangerClass, buttonPrimaryClass, buttonSecondaryClass } from "./form/FormField";
 
@@ -50,6 +52,8 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [editingComprador, setEditingComprador] = useState(false);
   const [compradorError, setCompradorError] = useState<string | null>(null);
+  const [editingSillas, setEditingSillas] = useState(false);
+  const [sillasError, setSillasError] = useState<string | null>(null);
 
   useEffect(() => {
     if (palco.estado === "disponible") return;
@@ -258,7 +262,10 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
   }
 
   // --- Palco reservado completo (un solo comprador) ---
-  const pendiente = saldoPendiente(palco.precio, palco.montoAbonado);
+  const montoSillasAdicionales = palco.sillasAdicionalesVendidas * palco.precioSillaAdicional;
+  const montoTotalPalco = palco.precio + montoSillasAdicionales;
+  const pendiente = saldoPendiente(montoTotalPalco, palco.montoAbonado);
+  const hayAlgunaSillaAdicional = palco.sillasAdicionalesVendidas > 0 || palco.sillasAdicionalesCortesia > 0;
 
   return (
     <Modal title={`Palco ${palco.numero}`} onClose={onClose}>
@@ -284,8 +291,34 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
         </div>
       )}
 
+      <div className="mb-4 flex items-start justify-between gap-2 rounded-lg border border-gridline p-3 text-sm">
+        <div>
+          <p className="font-medium text-text-primary">Sillas adicionales</p>
+          {hayAlgunaSillaAdicional ? (
+            <div className="text-text-secondary">
+              {palco.sillasAdicionalesVendidas > 0 && (
+                <p>
+                  Vendidas: {palco.sillasAdicionalesVendidas} × {formatCOP(palco.precioSillaAdicional)} ={" "}
+                  {formatCOP(montoSillasAdicionales)}
+                </p>
+              )}
+              {palco.sillasAdicionalesCortesia > 0 && <p>Cortesía: {palco.sillasAdicionalesCortesia}</p>}
+            </div>
+          ) : (
+            <p className="text-text-secondary">Ninguna</p>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => setEditingSillas(true)}
+          className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-2 py-1 text-sm font-medium text-series-1 transition duration-150 ease-out-strong hover:bg-surface-2 active:scale-[0.97]"
+        >
+          {hayAlgunaSillaAdicional ? "Editar" : "Agregar"}
+        </button>
+      </div>
+
       <div className="mb-4">
-        <PaymentProgress montoTotal={palco.precio} montoAbonado={palco.montoAbonado} />
+        <PaymentProgress montoTotal={montoTotalPalco} montoAbonado={palco.montoAbonado} />
       </div>
 
       {mode === "abonar" ? (
@@ -296,7 +329,7 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
           onSubmit={async (values) => {
             setError(null);
             try {
-              await agregarAbonoPalco(eventId, localityId, palco.id, values, palco.precio);
+              await agregarAbonoPalco(eventId, localityId, palco.id, values, montoTotalPalco);
               setMode("view");
             } catch (e) {
               setError(e instanceof Error ? e.message : "No se pudo registrar el abono");
@@ -338,7 +371,7 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
             onSubmit={async (values) => {
               setEditError(null);
               try {
-                await editarAbonoPalco(eventId, localityId, palco.id, editingPayment.id, values, palco.precio);
+                await editarAbonoPalco(eventId, localityId, palco.id, editingPayment.id, values, montoTotalPalco);
                 setEditingPayment(null);
               } catch (e) {
                 setEditError(e instanceof Error ? e.message : "No se pudo editar el abono");
@@ -365,6 +398,36 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
             }}
           />
           {compradorError && <p className="mt-3 text-sm text-status-critical">{compradorError}</p>}
+        </Modal>
+      )}
+
+      {editingSillas && (
+        <Modal title="Sillas adicionales" onClose={() => setEditingSillas(false)}>
+          <SillasAdicionalesForm
+            initialValues={{
+              sillasAdicionalesVendidas: palco.sillasAdicionalesVendidas,
+              sillasAdicionalesCortesia: palco.sillasAdicionalesCortesia,
+              precioSillaAdicional: palco.precioSillaAdicional,
+            }}
+            onCancel={() => setEditingSillas(false)}
+            onSubmit={async (values) => {
+              setSillasError(null);
+              try {
+                await actualizarSillasAdicionalesPalco(
+                  eventId,
+                  localityId,
+                  palco.id,
+                  values.sillasAdicionalesVendidas,
+                  values.sillasAdicionalesCortesia,
+                  values.precioSillaAdicional,
+                );
+                setEditingSillas(false);
+              } catch (e) {
+                setSillasError(e instanceof Error ? e.message : "No se pudieron guardar los cambios");
+              }
+            }}
+          />
+          {sillasError && <p className="mt-3 text-sm text-status-critical">{sillasError}</p>}
         </Modal>
       )}
 

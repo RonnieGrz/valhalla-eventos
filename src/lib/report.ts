@@ -63,6 +63,9 @@ export function buildReporteEventoWorkbook({
     { header: "Vendible por boleta", key: "vendiblePorBoleta", width: 16 },
     { header: "Asientos vendidos", key: "boletasVendidas", width: 14 },
     { header: "Capacidad", key: "capacidad", width: 12 },
+    { header: "Sillas adicionales vendidas", key: "sillasAdicionalesVendidas", width: 20 },
+    { header: "Precio silla adicional", key: "precioSillaAdicional", width: 18 },
+    { header: "Sillas adicionales cortesía", key: "sillasAdicionalesCortesia", width: 20 },
   ];
   styleHeaderRow(palcosSheet.getRow(1));
 
@@ -91,10 +94,13 @@ export function buildReporteEventoWorkbook({
       vendiblePorBoleta: palco.vendiblePorBoleta ? "Sí" : "No",
       boletasVendidas: palco.vendiblePorBoleta ? palco.boletasVendidas : "",
       capacidad: palco.capacidad,
+      sillasAdicionalesVendidas: palco.sillasAdicionalesVendidas > 0 ? palco.sillasAdicionalesVendidas : "",
+      precioSillaAdicional: palco.sillasAdicionalesVendidas > 0 ? palco.precioSillaAdicional : "",
+      sillasAdicionalesCortesia: palco.sillasAdicionalesCortesia > 0 ? palco.sillasAdicionalesCortesia : "",
     });
-    applyCurrencyFormat(row, ["precio", "comprometido", "abonado", "deuda"]);
+    applyCurrencyFormat(row, ["precio", "comprometido", "abonado", "deuda", "precioSillaAdicional"]);
   }
-  palcosSheet.autoFilter = "A1:M1";
+  palcosSheet.autoFilter = "A1:P1";
   palcosSheet.views = [{ state: "frozen", ySplit: 1 }];
 
   // --- Boletas sueltas: una fila por venta (comprador + cantidad de asientos). ---

@@ -56,6 +56,12 @@ export interface PalcoDoc {
   precioBoleta: number;
   /** Asientos vendidos por boleta suelta dentro de este palco (0 si no aplica). */
   boletasVendidas: number;
+  /** Sillas adicionales vendidas (pagadas) para este palco reservado completo, por fuera de su capacidad base (0 si no aplica). */
+  sillasAdicionalesVendidas: number;
+  /** Sillas adicionales de cortesía (sin costo) para este palco reservado completo (0 si no aplica). */
+  sillasAdicionalesCortesia: number;
+  /** Precio por silla adicional vendida (COP). 0 si no se han vendido sillas adicionales. */
+  precioSillaAdicional: number;
   createdAt: number;
   updatedAt: number;
 }

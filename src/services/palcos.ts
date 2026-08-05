@@ -53,6 +53,9 @@ export function listenPalcos(
           vendiblePorBoleta: data.vendiblePorBoleta ?? false,
           precioBoleta: data.precioBoleta ?? 0,
           boletasVendidas: data.boletasVendidas ?? 0,
+          sillasAdicionalesVendidas: data.sillasAdicionalesVendidas ?? 0,
+          sillasAdicionalesCortesia: data.sillasAdicionalesCortesia ?? 0,
+          precioSillaAdicional: data.precioSillaAdicional ?? 0,
         };
       }),
     );
@@ -201,6 +204,9 @@ export async function liberarPalco(eventId: string, localityId: string, palcoId:
       comprador: null,
       montoAbonado: 0,
       estado: "disponible",
+      sillasAdicionalesVendidas: 0,
+      sillasAdicionalesCortesia: 0,
+      precioSillaAdicional: 0,
       updatedAt: Date.now(),
     });
   });
@@ -216,6 +222,40 @@ export async function editarCompradorPalco(
   await updateDoc(palcoRef(eventId, localityId, palcoId), {
     comprador,
     updatedAt: Date.now(),
+  });
+}
+
+/**
+ * Fija la cantidad de sillas adicionales (vendidas y de cortesía) de un palco ya reservado
+ * completo (además de su capacidad base), y el precio de las vendidas. Las de cortesía no
+ * cuestan nada y no afectan el monto comprometido. Recalcula el estado del palco según el
+ * nuevo monto comprometido (precio del palco + sillas vendidas) frente a lo ya abonado.
+ */
+export async function actualizarSillasAdicionalesPalco(
+  eventId: string,
+  localityId: string,
+  palcoId: string,
+  sillasAdicionalesVendidas: number,
+  sillasAdicionalesCortesia: number,
+  precioSillaAdicional: number,
+) {
+  const ref = palcoRef(eventId, localityId, palcoId);
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) throw new Error("El palco ya no existe");
+    const data = snap.data() as PalcoDoc;
+    if (!data.comprador) {
+      throw new Error("Solo se pueden agregar sillas adicionales a un palco reservado completo");
+    }
+
+    const montoTotal = data.precio + sillasAdicionalesVendidas * precioSillaAdicional;
+    tx.update(ref, {
+      sillasAdicionalesVendidas,
+      sillasAdicionalesCortesia,
+      precioSillaAdicional: sillasAdicionalesVendidas > 0 ? precioSillaAdicional : 0,
+      estado: computeEstado(data.montoAbonado, montoTotal),
+      updatedAt: Date.now(),
+    });
   });
 }
 

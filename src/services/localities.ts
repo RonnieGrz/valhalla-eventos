@@ -121,6 +121,9 @@ async function batchCreatePalcos(
       vendiblePorBoleta: false,
       precioBoleta: 0,
       boletasVendidas: 0,
+      sillasAdicionalesVendidas: 0,
+      sillasAdicionalesCortesia: 0,
+      precioSillaAdicional: 0,
       createdAt: now,
       updatedAt: now,
     } satisfies PalcoDoc);
