@@ -18,6 +18,13 @@ import {
   montoComprometidoPalco,
 } from "../lib/estado";
 import { formatCOP } from "../lib/format";
+import type { MetodoPago } from "../types";
+
+const metodoLabel: Record<MetodoPago, string> = {
+  efectivo: "Efectivo",
+  transferencia: "Transferencia",
+  tarjeta: "Tarjeta",
+};
 
 export function EventDashboardPage() {
   const { eventId } = useParams<{ eventId: string }>();
@@ -58,6 +65,14 @@ export function EventDashboardPage() {
     allPalcos.reduce((sum, p) => sum + p.montoAbonado, 0) +
     allSales.reduce((sum, s) => sum + s.montoAbonado, 0);
   const montoPendiente = Math.max(0, montoComprometido - montoRecaudado);
+
+  const recaudadoPorMetodo = payments.reduce<Record<MetodoPago, number>>(
+    (acc, p) => {
+      acc[p.metodo] = (acc[p.metodo] ?? 0) + p.monto;
+      return acc;
+    },
+    { efectivo: 0, transferencia: 0, tarjeta: 0 },
+  );
 
   const ventasPorLocalidad: VentasPorLocalidadDatum[] = localities.map((loc) => {
     const palcos = palcosByLocality[loc.id] ?? [];
@@ -122,6 +137,19 @@ export function EventDashboardPage() {
           <StatCard label="Ingresos comprometidos" value={formatCOP(montoComprometido)} />
           <StatCard label="Recaudado" value={formatCOP(montoRecaudado)} accentClass="text-status-good" />
           <StatCard label="Pendiente por cobrar" value={formatCOP(montoPendiente)} accentClass="text-status-warning" />
+        </div>
+
+        <div className="mb-8">
+          <h2 className="mb-3 text-sm font-semibold text-text-primary">Recaudado por método de pago</h2>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {(Object.keys(metodoLabel) as MetodoPago[]).map((metodo) => (
+              <StatCard
+                key={metodo}
+                label={metodoLabel[metodo]}
+                value={formatCOP(recaudadoPorMetodo[metodo])}
+              />
+            ))}
+          </div>
         </div>
 
         <div className="mb-8 grid grid-cols-1 gap-4 lg:grid-cols-2">

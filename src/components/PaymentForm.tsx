@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { todayISO } from "../lib/format";
+import { formatCOP, todayISO } from "../lib/format";
 import type { MetodoPago } from "../types";
 import { buttonPrimaryClass, buttonSecondaryClass, FormField, inputClass } from "./form/FormField";
 
@@ -50,6 +50,7 @@ export function PaymentForm({
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<PaymentFormInput, unknown, PaymentFormValues>({
     resolver: zodResolver(buildSchema(montoMaximo)),
@@ -61,6 +62,15 @@ export function PaymentForm({
       <FormField label={`Monto (máximo: ${montoMaximo})`} error={errors.monto?.message}>
         <input type="number" min={0} className={inputClass} {...register("monto")} />
       </FormField>
+      {montoMaximo > 0 && (
+        <button
+          type="button"
+          onClick={() => setValue("monto", montoMaximo, { shouldValidate: true })}
+          className="text-sm font-medium text-series-1 hover:underline"
+        >
+          Pagar saldo completo ({formatCOP(montoMaximo)})
+        </button>
+      )}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <FormField label="Fecha" error={errors.fecha?.message}>
           <input type="date" className={inputClass} {...register("fecha")} />
