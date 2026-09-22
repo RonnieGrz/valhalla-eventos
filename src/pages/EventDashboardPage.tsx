@@ -35,6 +35,9 @@ export function EventDashboardPage() {
   const { events } = useEvents();
   const [descargando, setDescargando] = useState(false);
   const [reparando, setReparando] = useState(false);
+  const [reparacionMensaje, setReparacionMensaje] = useState<{ tipo: "ok" | "error"; texto: string } | null>(
+    null,
+  );
 
   if (!eventId) return null;
 
@@ -58,13 +61,19 @@ export function EventDashboardPage() {
   }
 
   async function handleReparar() {
-    if (!confirm("Esto completará eventId/localidadId en pagos antiguos que les falten. ¿Continuar?")) {
-      return;
-    }
     setReparando(true);
+    setReparacionMensaje(null);
     try {
       const { total, fixed } = await backfillPaymentEventIds();
-      alert(`Revisados: ${total}. Reparados: ${fixed}.`);
+      setReparacionMensaje({
+        tipo: "ok",
+        texto: `Revisados: ${total}. Reparados: ${fixed}.`,
+      });
+    } catch (err) {
+      setReparacionMensaje({
+        tipo: "error",
+        texto: err instanceof Error ? err.message : "Error desconocido al reparar pagos.",
+      });
     } finally {
       setReparando(false);
     }
@@ -131,6 +140,16 @@ export function EventDashboardPage() {
             </button>
           </div>
         </div>
+
+        {reparacionMensaje && (
+          <p
+            className={`mb-6 text-sm ${
+              reparacionMensaje.tipo === "error" ? "text-status-critical" : "text-status-good"
+            }`}
+          >
+            {reparacionMensaje.texto}
+          </p>
+        )}
 
         <Link
           to={`/eventos/${eventId}/localidades`}
