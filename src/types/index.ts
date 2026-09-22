@@ -117,4 +117,8 @@ export interface PaymentDoc {
 
 export interface Payment extends PaymentDoc {
   id: string;
+  /** Id del palco al que pertenece este pago (directo o de una boleta suelta dentro de él), si aplica. Derivado de la ruta del documento, no se guarda en Firestore. */
+  palcoId?: string;
+  /** Id del documento padre inmediato (palco, venta de boleta suelta en palco, o venta de boleta suelta en localidad). Derivado de la ruta del documento, no se guarda en Firestore. */
+  parentId?: string;
 }

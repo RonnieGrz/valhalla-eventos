@@ -106,7 +106,19 @@ export function listenEventPayments(eventId: string, cb: (payments: Payment[]) =
     orderBy("fecha", "asc"),
   );
   return onSnapshot(q, (snap) => {
-    cb(snap.docs.map((d) => ({ id: d.id, ...(d.data() as PaymentDoc) })));
+    cb(
+      snap.docs.map((d) => {
+        // La ruta siempre es .../payments/{id}; el segmento justo antes es el id
+        // del documento padre (palco, venta de boleta en palco, o venta de boleta
+        // en localidad), y si hay un segmento "palcos" en el camino, el que le
+        // sigue es el id del palco (directo o dueño de la venta de boleta suelta).
+        const parts = d.ref.path.split("/");
+        const parentId = parts[parts.length - 2];
+        const palcoIdx = parts.indexOf("palcos");
+        const palcoId = palcoIdx !== -1 ? parts[palcoIdx + 1] : undefined;
+        return { id: d.id, ...(d.data() as PaymentDoc), parentId, palcoId };
+      }),
+    );
   });
 }
 

@@ -8,7 +8,7 @@ import {
   VentasPorLocalidadChart,
   type VentasPorLocalidadDatum,
 } from "../components/dashboard/VentasPorLocalidadChart";
-import { buttonSecondaryClass } from "../components/form/FormField";
+import { buttonSecondaryClass, inputClass } from "../components/form/FormField";
 import { useEventData } from "../hooks/useEventData";
 import { useEventPayments } from "../hooks/useEventPayments";
 import { useEvents } from "../hooks/useEvents";
@@ -17,14 +17,53 @@ import {
   contarPalcosPorEstado,
   montoComprometidoPalco,
 } from "../lib/estado";
-import { formatCOP } from "../lib/format";
-import type { MetodoPago } from "../types";
+import { formatCOP, formatFecha } from "../lib/format";
+import { paymentMatchesQuery } from "../lib/search";
+import type { BoletaSale, Comprador, MetodoPago, Palco, Payment } from "../types";
 
 const metodoLabel: Record<MetodoPago, string> = {
   efectivo: "Efectivo",
   transferencia: "Transferencia",
   tarjeta: "Tarjeta",
 };
+
+interface PaymentContext {
+  palcoNumero?: number;
+  comprador: Comprador | null;
+  descripcion: string;
+}
+
+/**
+ * Un pago no guarda a quién/qué palco pertenece (solo eventId/localidadId para
+ * las queries del dashboard); esto lo reconstruye cruzando el id del padre
+ * (capturado en listenEventPayments) contra los palcos y ventas ya cargados.
+ */
+function resolvePaymentContext(
+  payment: Payment,
+  palcoById: Map<string, Palco>,
+  saleById: Map<string, BoletaSale>,
+): PaymentContext {
+  if (payment.palcoId) {
+    const palco = palcoById.get(payment.palcoId);
+    if (payment.parentId === payment.palcoId) {
+      return {
+        palcoNumero: palco?.numero,
+        comprador: palco?.comprador ?? null,
+        descripcion: `Palco N.° ${palco?.numero ?? "?"}`,
+      };
+    }
+    return {
+      palcoNumero: palco?.numero,
+      comprador: null,
+      descripcion: `Palco N.° ${palco?.numero ?? "?"} (boleta suelta)`,
+    };
+  }
+  const sale = payment.parentId ? saleById.get(payment.parentId) : undefined;
+  return {
+    comprador: sale?.comprador ?? null,
+    descripcion: sale ? `Boleta suelta — ${sale.comprador.nombre}` : "Boleta suelta",
+  };
+}
 
 export function EventDashboardPage() {
   const { eventId } = useParams<{ eventId: string }>();
@@ -33,6 +72,8 @@ export function EventDashboardPage() {
   const { payments } = useEventPayments(eventId);
   const { events } = useEvents();
   const [descargando, setDescargando] = useState(false);
+  const [metodoFiltro, setMetodoFiltro] = useState<MetodoPago | "todos">("todos");
+  const [busquedaPagos, setBusquedaPagos] = useState("");
 
   if (!eventId) return null;
 
@@ -73,6 +114,15 @@ export function EventDashboardPage() {
     },
     { efectivo: 0, transferencia: 0, tarjeta: 0 },
   );
+
+  const palcoById = new Map(allPalcos.map((p) => [p.id, p]));
+  const saleById = new Map(allSales.map((s) => [s.id, s]));
+
+  const pagosFiltrados = payments
+    .filter((p) => metodoFiltro === "todos" || p.metodo === metodoFiltro)
+    .map((p) => ({ payment: p, contexto: resolvePaymentContext(p, palcoById, saleById) }))
+    .filter(({ contexto }) => paymentMatchesQuery(contexto, busquedaPagos))
+    .reverse();
 
   const ventasPorLocalidad: VentasPorLocalidadDatum[] = localities.map((loc) => {
     const palcos = palcosByLocality[loc.id] ?? [];
@@ -143,13 +193,62 @@ export function EventDashboardPage() {
           <h2 className="mb-3 text-sm font-semibold text-text-primary">Recaudado por método de pago</h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {(Object.keys(metodoLabel) as MetodoPago[]).map((metodo) => (
-              <StatCard
+              <button
                 key={metodo}
-                label={metodoLabel[metodo]}
-                value={formatCOP(recaudadoPorMetodo[metodo])}
-              />
+                type="button"
+                onClick={() => setMetodoFiltro((prev) => (prev === metodo ? "todos" : metodo))}
+                className={`rounded-xl text-left transition duration-150 ease-out-strong ${
+                  metodoFiltro === metodo ? "ring-2 ring-series-1" : ""
+                }`}
+              >
+                <StatCard label={metodoLabel[metodo]} value={formatCOP(recaudadoPorMetodo[metodo])} />
+              </button>
             ))}
           </div>
+        </div>
+
+        <div className="mb-8 rounded-xl border border-gridline bg-surface-1 p-4 shadow-sm">
+          <h2 className="mb-3 text-sm font-semibold text-text-primary">Verificar pagos</h2>
+          <div className="mb-3 flex flex-col gap-3 sm:flex-row">
+            <select
+              value={metodoFiltro}
+              onChange={(e) => setMetodoFiltro(e.target.value as MetodoPago | "todos")}
+              className={`sm:max-w-xs ${inputClass}`}
+              aria-label="Filtrar pagos por método de pago"
+            >
+              <option value="todos">Todos los métodos</option>
+              {(Object.keys(metodoLabel) as MetodoPago[]).map((metodo) => (
+                <option key={metodo} value={metodo}>
+                  {metodoLabel[metodo]}
+                </option>
+              ))}
+            </select>
+            <input
+              type="search"
+              value={busquedaPagos}
+              onChange={(e) => setBusquedaPagos(e.target.value)}
+              placeholder="Buscar por número de palco o nombre del comprador"
+              className={inputClass}
+              aria-label="Buscar pagos por número de palco o comprador"
+            />
+          </div>
+          {pagosFiltrados.length === 0 ? (
+            <p className="text-sm text-text-muted">Ningún pago coincide con el filtro.</p>
+          ) : (
+            <ul className="max-h-96 divide-y divide-gridline overflow-y-auto">
+              {pagosFiltrados.map(({ payment, contexto }) => (
+                <li key={payment.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                  <div className="min-w-0">
+                    <p className="font-medium text-text-primary">{formatCOP(payment.monto)}</p>
+                    <p className="text-text-muted">
+                      {formatFecha(payment.fecha)} · {metodoLabel[payment.metodo]} · {contexto.descripcion}
+                      {payment.nota ? ` · ${payment.nota}` : ""}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <div className="mb-8 grid grid-cols-1 gap-4 lg:grid-cols-2">

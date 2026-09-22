@@ -29,3 +29,14 @@ export function ventaMatchesQuery(venta: { comprador: Comprador }, query: string
   if (!q) return true;
   return compradorMatches(venta.comprador, q);
 }
+
+/** Un pago coincide por el número del palco al que pertenece, o por el comprador asociado. */
+export function paymentMatchesQuery(
+  info: { palcoNumero?: number; comprador?: Comprador | null },
+  query: string,
+): boolean {
+  const q = query.trim();
+  if (!q) return true;
+  if (info.palcoNumero !== undefined && String(info.palcoNumero).includes(q)) return true;
+  return compradorMatches(info.comprador ?? null, q);
+}
