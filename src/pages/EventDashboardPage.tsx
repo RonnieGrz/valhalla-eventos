@@ -12,7 +12,6 @@ import { buttonSecondaryClass } from "../components/form/FormField";
 import { useEventData } from "../hooks/useEventData";
 import { useEventPayments } from "../hooks/useEventPayments";
 import { useEvents } from "../hooks/useEvents";
-import { backfillPaymentEventIds } from "../lib/backfillPayments";
 import {
   contarBoletasPorEstado,
   contarPalcosPorEstado,
@@ -34,10 +33,6 @@ export function EventDashboardPage() {
   const { payments } = useEventPayments(eventId);
   const { events } = useEvents();
   const [descargando, setDescargando] = useState(false);
-  const [reparando, setReparando] = useState(false);
-  const [reparacionMensaje, setReparacionMensaje] = useState<{ tipo: "ok" | "error"; texto: string } | null>(
-    null,
-  );
 
   if (!eventId) return null;
 
@@ -57,25 +52,6 @@ export function EventDashboardPage() {
       });
     } finally {
       setDescargando(false);
-    }
-  }
-
-  async function handleReparar() {
-    setReparando(true);
-    setReparacionMensaje(null);
-    try {
-      const { total, fixed } = await backfillPaymentEventIds();
-      setReparacionMensaje({
-        tipo: "ok",
-        texto: `Revisados: ${total}. Reparados: ${fixed}.`,
-      });
-    } catch (err) {
-      setReparacionMensaje({
-        tipo: "error",
-        texto: err instanceof Error ? err.message : "Error desconocido al reparar pagos.",
-      });
-    } finally {
-      setReparando(false);
     }
   }
 
@@ -119,37 +95,16 @@ export function EventDashboardPage() {
       <main className="mx-auto max-w-6xl px-4 py-8">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <h1 className="font-display text-2xl font-bold text-text-primary">Dashboard</h1>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={handleReparar}
-              disabled={reparando}
-              className={`inline-flex min-h-11 items-center gap-2 ${buttonSecondaryClass}`}
-              title="Completa eventId/localidadId en pagos antiguos que no aparecen en el dashboard"
-            >
-              {reparando ? "Reparando..." : "Reparar pagos antiguos"}
-            </button>
-            <button
-              type="button"
-              onClick={handleDescargarReporte}
-              disabled={descargando || loading}
-              className={`inline-flex min-h-11 items-center gap-2 ${buttonSecondaryClass}`}
-            >
-              <DownloadIcon className="h-4 w-4" />
-              {descargando ? "Generando..." : "Descargar reporte (Excel)"}
-            </button>
-          </div>
-        </div>
-
-        {reparacionMensaje && (
-          <p
-            className={`mb-6 text-sm ${
-              reparacionMensaje.tipo === "error" ? "text-status-critical" : "text-status-good"
-            }`}
+          <button
+            type="button"
+            onClick={handleDescargarReporte}
+            disabled={descargando || loading}
+            className={`inline-flex min-h-11 items-center gap-2 ${buttonSecondaryClass}`}
           >
-            {reparacionMensaje.texto}
-          </p>
-        )}
+            <DownloadIcon className="h-4 w-4" />
+            {descargando ? "Generando..." : "Descargar reporte (Excel)"}
+          </button>
+        </div>
 
         <Link
           to={`/eventos/${eventId}/localidades`}
