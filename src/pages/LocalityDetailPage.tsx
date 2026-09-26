@@ -2,17 +2,20 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { BoletaSaleDetailModal } from "../components/BoletaSaleDetailModal";
 import { BoletaSaleList } from "../components/BoletaSaleList";
+import { EditarPrecioBoletasForm } from "../components/EditarPrecioBoletasForm";
 import { Navbar } from "../components/Navbar";
 import { PalcoDetailModal } from "../components/PalcoDetailModal";
 import { PalcoGrid } from "../components/PalcoGrid";
 import { VentaBoletasForm } from "../components/VentaBoletasForm";
-import { buttonPrimaryClass, inputClass } from "../components/form/FormField";
+import { buttonPrimaryClass, buttonSecondaryClass, inputClass } from "../components/form/FormField";
 import { Modal } from "../components/Modal";
 import { aforoRestante } from "../lib/estado";
+import { formatCOP } from "../lib/format";
 import { palcoMatchesQuery, ventaMatchesQuery } from "../lib/search";
 import { useLocalities } from "../hooks/useLocalities";
 import { useLocalityDetail } from "../hooks/useLocalityDetail";
 import { crearVentaBoletas } from "../services/boletaSales";
+import { updateLocality } from "../services/localities";
 
 export function LocalityDetailPage() {
   const { eventId, localityId } = useParams<{ eventId: string; localityId: string }>();
@@ -22,6 +25,8 @@ export function LocalityDetailPage() {
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
   const [showVentaForm, setShowVentaForm] = useState(false);
   const [ventaError, setVentaError] = useState<string | null>(null);
+  const [editingPrecio, setEditingPrecio] = useState(false);
+  const [precioError, setPrecioError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
 
   const localidad = localities.find((l) => l.id === localityId);
@@ -82,15 +87,20 @@ export function LocalityDetailPage() {
           <section>
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-lg font-semibold text-text-primary">
-                Boletas sueltas · {restante} disponibles
+                Boletas sueltas · {restante} disponibles · {formatCOP(localidad.boletasConfig.precioUnitario)} c/u
               </h2>
-              <button
-                onClick={() => setShowVentaForm(true)}
-                disabled={restante === 0}
-                className={buttonPrimaryClass}
-              >
-                + Vender boletas
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <button onClick={() => setEditingPrecio(true)} className={buttonSecondaryClass}>
+                  Editar precio
+                </button>
+                <button
+                  onClick={() => setShowVentaForm(true)}
+                  disabled={restante === 0}
+                  className={buttonPrimaryClass}
+                >
+                  + Vender boletas
+                </button>
+              </div>
             </div>
             {query && filteredSales.length === 0 ? (
               <p className="text-sm text-text-muted">
@@ -112,11 +122,13 @@ export function LocalityDetailPage() {
         />
       )}
 
-      {selectedSale && (
+      {selectedSale && localidad && (
         <BoletaSaleDetailModal
           eventId={eventId}
           localityId={localityId}
           sale={selectedSale}
+          maxCantidad={restante + selectedSale.cantidad}
+          aforoTotal={localidad.boletasConfig.aforo}
           onClose={() => setSelectedSaleId(null)}
         />
       )}
@@ -146,6 +158,27 @@ export function LocalityDetailPage() {
             }}
           />
           {ventaError && <p className="mt-3 text-sm text-status-critical">{ventaError}</p>}
+        </Modal>
+      )}
+
+      {editingPrecio && localidad && (
+        <Modal title="Editar precio de boletas sueltas" onClose={() => setEditingPrecio(false)}>
+          <EditarPrecioBoletasForm
+            precioActual={localidad.boletasConfig.precioUnitario}
+            onCancel={() => setEditingPrecio(false)}
+            onSubmit={async (values) => {
+              setPrecioError(null);
+              try {
+                await updateLocality(eventId, localityId, {
+                  boletasConfig: { ...localidad.boletasConfig, precioUnitario: values.precioUnitario },
+                });
+                setEditingPrecio(false);
+              } catch (e) {
+                setPrecioError(e instanceof Error ? e.message : "No se pudo actualizar el precio");
+              }
+            }}
+          />
+          {precioError && <p className="mt-3 text-sm text-status-critical">{precioError}</p>}
         </Modal>
       )}
     </div>

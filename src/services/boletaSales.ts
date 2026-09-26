@@ -126,6 +126,45 @@ export async function agregarAbonoVenta(
   );
 }
 
+/** Corrige la cantidad de boletas de una venta ya registrada, validando el aforo restante de la localidad. */
+export async function editarCantidadVenta(
+  eventId: string,
+  localityId: string,
+  saleId: string,
+  nuevaCantidad: number,
+  aforoTotal: number,
+) {
+  const existing = await getDocs(salesCol(eventId, localityId));
+  const yaAsignadasSinEstaVenta = existing.docs.reduce(
+    (sum, d) => sum + (d.id === saleId ? 0 : (d.data() as BoletaSaleDoc).cantidad),
+    0,
+  );
+  if (yaAsignadasSinEstaVenta + nuevaCantidad > aforoTotal) {
+    throw new Error(
+      `Solo quedan ${Math.max(0, aforoTotal - yaAsignadasSinEstaVenta)} boletas disponibles en esta localidad`,
+    );
+  }
+
+  const ref = boletaSaleRef(eventId, localityId, saleId);
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) throw new Error("El registro ya no existe");
+    const sale = snap.data() as BoletaSaleDoc;
+
+    const nuevoMontoTotal = nuevaCantidad * sale.precioUnitario;
+    if (sale.montoAbonado > nuevoMontoTotal) {
+      throw new Error("Ya se abonó más de lo que valdría esa cantidad; edita los abonos primero");
+    }
+
+    tx.update(ref, {
+      cantidad: nuevaCantidad,
+      montoTotal: nuevoMontoTotal,
+      estado: computeEstado(sale.montoAbonado, nuevoMontoTotal),
+      updatedAt: Date.now(),
+    });
+  });
+}
+
 /** Edita un abono ya registrado sobre una venta de boletas sueltas de una localidad. */
 export async function editarAbonoVenta(
   eventId: string,
