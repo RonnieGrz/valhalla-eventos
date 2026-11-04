@@ -62,6 +62,8 @@ export interface PalcoDoc {
   sillasAdicionalesCortesia: number;
   /** Precio por silla adicional vendida (COP). 0 si no se han vendido sillas adicionales. */
   precioSillaAdicional: number;
+  /** Si es true, el palco se entregó de cortesía: no cuenta como ingreso (ni comprometido ni recaudado). */
+  cortesia: boolean;
   createdAt: number;
   updatedAt: number;
 }

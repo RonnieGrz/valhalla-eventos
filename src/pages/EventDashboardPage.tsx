@@ -16,6 +16,7 @@ import {
   contarBoletasPorEstado,
   contarPalcosPorEstado,
   montoComprometidoPalco,
+  montoRecaudadoPalco,
 } from "../lib/estado";
 import { formatCOP, formatFecha } from "../lib/format";
 import { paymentMatchesQuery } from "../lib/search";
@@ -103,7 +104,7 @@ export function EventDashboardPage() {
     allPalcos.reduce((sum, p) => sum + montoComprometidoPalco(p), 0) +
     allSales.reduce((sum, s) => sum + s.montoTotal, 0);
   const montoRecaudado =
-    allPalcos.reduce((sum, p) => sum + p.montoAbonado, 0) +
+    allPalcos.reduce((sum, p) => sum + montoRecaudadoPalco(p), 0) +
     allSales.reduce((sum, s) => sum + s.montoAbonado, 0);
   const montoPendiente = Math.max(0, montoComprometido - montoRecaudado);
 
@@ -131,7 +132,7 @@ export function EventDashboardPage() {
       palcos.reduce((s, p) => s + montoComprometidoPalco(p), 0) +
       sales.reduce((s, sale) => s + sale.montoTotal, 0);
     const recaudado =
-      palcos.reduce((s, p) => s + p.montoAbonado, 0) + sales.reduce((s, sale) => s + sale.montoAbonado, 0);
+      palcos.reduce((s, p) => s + montoRecaudadoPalco(p), 0) + sales.reduce((s, sale) => s + sale.montoAbonado, 0);
     return {
       nombre: loc.nombre,
       recaudado,

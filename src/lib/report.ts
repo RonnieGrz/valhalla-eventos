@@ -1,6 +1,6 @@
 import ExcelJS from "exceljs";
 import type { BoletaSale, EstadoVenta, Localidad, Palco } from "../types";
-import { montoComprometidoPalco, saldoPendiente } from "./estado";
+import { montoComprometidoPalco, montoRecaudadoPalco, saldoPendiente } from "./estado";
 
 const ESTADO_LABEL: Record<EstadoVenta, string> = {
   disponible: "Disponible",
@@ -79,17 +79,18 @@ export function buildReporteEventoWorkbook({
 
   for (const palco of allPalcos) {
     const comprometido = montoComprometidoPalco(palco);
-    const deuda = saldoPendiente(comprometido, palco.montoAbonado);
+    const abonado = montoRecaudadoPalco(palco);
+    const deuda = saldoPendiente(comprometido, abonado);
     const row = palcosSheet.addRow({
       localidad: localidadNombre(palco.localidadId),
       numero: palco.numero,
-      estado: ESTADO_LABEL[palco.estado],
+      estado: palco.cortesia ? "Cortesía" : ESTADO_LABEL[palco.estado],
       comprador: palco.comprador?.nombre ?? "",
       cedula: palco.comprador?.cedula ?? "",
       telefono: palco.comprador?.telefono ?? "",
       precio: palco.precio,
       comprometido,
-      abonado: palco.montoAbonado,
+      abonado,
       deuda,
       vendiblePorBoleta: palco.vendiblePorBoleta ? "Sí" : "No",
       boletasVendidas: palco.vendiblePorBoleta ? palco.boletasVendidas : "",

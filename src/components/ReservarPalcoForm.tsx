@@ -17,6 +17,7 @@ function buildSchema(precio: number) {
     fecha: z.string().min(1, "Requerido"),
     metodo: z.enum(["efectivo", "transferencia", "tarjeta"]),
     nota: z.string().optional().default(""),
+    cortesia: z.boolean().default(false),
   });
 }
 
@@ -33,11 +34,13 @@ export function ReservarPalcoForm({ palco, onCancel, onSubmit }: ReservarPalcoFo
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<ReservarPalcoFormInput, unknown, ReservarPalcoFormValues>({
     resolver: zodResolver(buildSchema(palco.precio)),
-    defaultValues: { fecha: todayISO(), metodo: "efectivo", monto: 0 },
+    defaultValues: { fecha: todayISO(), metodo: "efectivo", monto: 0, cortesia: false },
   });
+  const esCortesia = watch("cortesia");
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
@@ -52,21 +55,29 @@ export function ReservarPalcoForm({ palco, onCancel, onSubmit }: ReservarPalcoFo
           <input className={inputClass} {...register("telefono")} />
         </FormField>
       </div>
-      <FormField label={`Abono inicial (precio del palco: ${palco.precio})`} error={errors.monto?.message}>
-        <input type="number" min={0} className={inputClass} {...register("monto")} />
-      </FormField>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <FormField label="Fecha del abono" error={errors.fecha?.message}>
-          <input type="date" className={inputClass} {...register("fecha")} />
-        </FormField>
-        <FormField label="Método de pago" error={errors.metodo?.message}>
-          <select className={inputClass} {...register("metodo")}>
-            <option value="efectivo">Efectivo</option>
-            <option value="transferencia">Transferencia</option>
-            <option value="tarjeta">Tarjeta</option>
-          </select>
-        </FormField>
-      </div>
+      <label className="flex min-h-11 items-center gap-2 text-sm text-text-primary">
+        <input type="checkbox" className="h-4 w-4" {...register("cortesia")} />
+        Palco de cortesía (no cuenta como ingreso)
+      </label>
+      {!esCortesia && (
+        <>
+          <FormField label={`Abono inicial (precio del palco: ${palco.precio})`} error={errors.monto?.message}>
+            <input type="number" min={0} className={inputClass} {...register("monto")} />
+          </FormField>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <FormField label="Fecha del abono" error={errors.fecha?.message}>
+              <input type="date" className={inputClass} {...register("fecha")} />
+            </FormField>
+            <FormField label="Método de pago" error={errors.metodo?.message}>
+              <select className={inputClass} {...register("metodo")}>
+                <option value="efectivo">Efectivo</option>
+                <option value="transferencia">Transferencia</option>
+                <option value="tarjeta">Tarjeta</option>
+              </select>
+            </FormField>
+          </div>
+        </>
+      )}
       <FormField label="Nota (opcional)" error={errors.nota?.message}>
         <input className={inputClass} {...register("nota")} />
       </FormField>

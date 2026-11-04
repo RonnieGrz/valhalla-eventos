@@ -125,6 +125,7 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
                   { nombre: values.nombre, cedula: values.cedula, telefono: values.telefono },
                   { monto: values.monto, fecha: values.fecha, metodo: values.metodo, nota: values.nota ?? "" },
                   palco.precio,
+                  values.cortesia,
                 );
                 onClose();
               } catch (e) {
@@ -159,6 +160,7 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
                       { nombre: values.nombre, cedula: values.cedula, telefono: values.telefono },
                       { monto: values.monto, fecha: values.fecha, metodo: values.metodo, nota: values.nota ?? "" },
                       palco.precio,
+                      values.cortesia,
                     );
                     onClose();
                   } catch (e) {
@@ -326,7 +328,7 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
 
   // --- Palco reservado completo (un solo comprador) ---
   const montoSillasAdicionales = palco.sillasAdicionalesVendidas * palco.precioSillaAdicional;
-  const montoTotalPalco = palco.precio + montoSillasAdicionales;
+  const montoTotalPalco = palco.cortesia ? 0 : palco.precio + montoSillasAdicionales;
   const pendiente = saldoPendiente(montoTotalPalco, palco.montoAbonado);
   const hayAlgunaSillaAdicional = palco.sillasAdicionalesVendidas > 0 || palco.sillasAdicionalesCortesia > 0;
 
@@ -336,6 +338,7 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
         <div className="flex items-center gap-2">
           <EstadoBadge estado={palco.estado} />
           <span className="text-sm text-text-muted">Capacidad {palco.capacidad}</span>
+          {palco.cortesia && <span className="text-sm font-medium text-status-warning">Cortesía</span>}
         </div>
         <button
           type="button"
@@ -389,9 +392,11 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
         </button>
       </div>
 
-      <div className="mb-4">
-        <PaymentProgress montoTotal={montoTotalPalco} montoAbonado={palco.montoAbonado} />
-      </div>
+      {!palco.cortesia && (
+        <div className="mb-4">
+          <PaymentProgress montoTotal={montoTotalPalco} montoAbonado={palco.montoAbonado} />
+        </div>
+      )}
 
       {mode === "abonar" ? (
         <PaymentForm

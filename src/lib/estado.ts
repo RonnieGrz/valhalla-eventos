@@ -44,8 +44,13 @@ export function montoComprometidoPalco(palco: Palco): number {
   if (palco.vendiblePorBoleta && palco.boletasVendidas > 0) {
     return palco.boletasVendidas * palco.precioBoleta;
   }
-  if (palco.estado === "disponible") return 0;
+  if (palco.estado === "disponible" || palco.cortesia) return 0;
   return palco.precio + palco.sillasAdicionalesVendidas * palco.precioSillaAdicional;
+}
+
+/** Monto recaudado de un palco; los de cortesía nunca cuentan como ingreso. */
+export function montoRecaudadoPalco(palco: Palco): number {
+  return palco.cortesia ? 0 : palco.montoAbonado;
 }
 
 export function contarPalcosPorEstado(palcos: Palco[]) {

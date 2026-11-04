@@ -56,6 +56,7 @@ export function listenPalcos(
           sillasAdicionalesVendidas: data.sillasAdicionalesVendidas ?? 0,
           sillasAdicionalesCortesia: data.sillasAdicionalesCortesia ?? 0,
           precioSillaAdicional: data.precioSillaAdicional ?? 0,
+          cortesia: data.cortesia ?? false,
         };
       }),
     );
@@ -92,9 +93,11 @@ export async function reservarPalco(
   comprador: Comprador,
   abonoInicial: NuevoAbono,
   precio: number,
+  cortesia = false,
 ) {
   const ref = palcoRef(eventId, localityId, palcoId);
-  const estadoInicial = computeEstado(abonoInicial.monto, precio);
+  // Un palco de cortesía no tiene abonos y queda entregado ("vendido") sin generar ingreso.
+  const estadoInicial = cortesia ? "vendido" : computeEstado(abonoInicial.monto, precio);
 
   await runTransaction(db, async (tx) => {
     const snap = await tx.get(ref);
@@ -107,10 +110,11 @@ export async function reservarPalco(
       throw new Error("Este palco ya tiene boletas sueltas vendidas, no se puede reservar completo");
     }
 
-    if (abonoInicial.monto > 0) {
+    const montoInicial = cortesia ? 0 : abonoInicial.monto;
+    if (montoInicial > 0) {
       const paymentRef = doc(collection(ref, "payments"));
       tx.set(paymentRef, {
-        monto: abonoInicial.monto,
+        monto: montoInicial,
         fecha: abonoInicial.fecha,
         metodo: abonoInicial.metodo,
         nota: abonoInicial.nota,
@@ -122,7 +126,8 @@ export async function reservarPalco(
 
     tx.update(ref, {
       comprador,
-      montoAbonado: abonoInicial.monto,
+      montoAbonado: montoInicial,
+      cortesia,
       estado: estadoInicial,
       updatedAt: Date.now(),
     });
@@ -235,6 +240,7 @@ export async function liberarPalco(eventId: string, localityId: string, palcoId:
       comprador: null,
       montoAbonado: 0,
       estado: "disponible",
+      cortesia: false,
       sillasAdicionalesVendidas: 0,
       sillasAdicionalesCortesia: 0,
       precioSillaAdicional: 0,
@@ -284,7 +290,7 @@ export async function actualizarSillasAdicionalesPalco(
       sillasAdicionalesVendidas,
       sillasAdicionalesCortesia,
       precioSillaAdicional: sillasAdicionalesVendidas > 0 ? precioSillaAdicional : 0,
-      estado: computeEstado(data.montoAbonado, montoTotal),
+      estado: data.cortesia ? "vendido" : computeEstado(data.montoAbonado, montoTotal),
       updatedAt: Date.now(),
     });
   });

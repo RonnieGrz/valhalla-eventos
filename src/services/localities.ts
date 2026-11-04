@@ -124,6 +124,7 @@ async function batchCreatePalcos(
       sillasAdicionalesVendidas: 0,
       sillasAdicionalesCortesia: 0,
       precioSillaAdicional: 0,
+      cortesia: false,
       createdAt: now,
       updatedAt: now,
     } satisfies PalcoDoc);
