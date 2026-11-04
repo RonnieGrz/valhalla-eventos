@@ -353,7 +353,7 @@ export function PalcoDetailModal({ eventId, localityId, palco, onClose }: PalcoD
         <div className="mb-4 flex items-start justify-between gap-2 rounded-lg border border-gridline p-3 text-sm">
           <div>
             <p className="font-medium text-text-primary">{palco.comprador.nombre}</p>
-            <p className="text-text-secondary">CC {palco.comprador.cedula}</p>
+            {palco.comprador.cedula && <p className="text-text-secondary">CC {palco.comprador.cedula}</p>}
             <p className="text-text-secondary">{palco.comprador.telefono}</p>
           </div>
           <button

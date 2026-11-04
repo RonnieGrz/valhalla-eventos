@@ -85,6 +85,39 @@ export function listenPalcoPayments(
   });
 }
 
+/**
+ * Marca varios palcos disponibles como cortesía en una sola operación: quedan asignados a la
+ * persona o entidad indicada, sin abonos y sin contar como ingreso. Falla sin cambiar nada si
+ * alguno ya no está disponible o tiene boletas sueltas vendidas.
+ */
+export async function marcarPalcosCortesia(
+  eventId: string,
+  localityId: string,
+  palcoIds: string[],
+  comprador: Comprador,
+) {
+  await runTransaction(db, async (tx) => {
+    const refs = palcoIds.map((id) => palcoRef(eventId, localityId, id));
+    const snaps = await Promise.all(refs.map((r) => tx.get(r)));
+    snaps.forEach((snap) => {
+      if (!snap.exists()) throw new Error("Un palco seleccionado ya no existe");
+      const data = snap.data() as PalcoDoc;
+      if (data.estado !== "disponible" || data.boletasVendidas > 0) {
+        throw new Error(`El palco ${data.numero} ya no está disponible`);
+      }
+    });
+    refs.forEach((r) => {
+      tx.update(r, {
+        comprador,
+        montoAbonado: 0,
+        cortesia: true,
+        estado: "vendido",
+        updatedAt: Date.now(),
+      });
+    });
+  });
+}
+
 /** Reserva un palco disponible: asigna comprador y, si hay abono inicial, lo registra. */
 export async function reservarPalco(
   eventId: string,

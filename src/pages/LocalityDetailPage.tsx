@@ -16,6 +16,8 @@ import { useLocalities } from "../hooks/useLocalities";
 import { useLocalityDetail } from "../hooks/useLocalityDetail";
 import { crearVentaBoletas } from "../services/boletaSales";
 import { updateLocality } from "../services/localities";
+import { marcarPalcosCortesia } from "../services/palcos";
+import { CortesiaForm } from "../components/CortesiaForm";
 
 export function LocalityDetailPage() {
   const { eventId, localityId } = useParams<{ eventId: string; localityId: string }>();
@@ -28,6 +30,27 @@ export function LocalityDetailPage() {
   const [editingPrecio, setEditingPrecio] = useState(false);
   const [precioError, setPrecioError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [seleccionando, setSeleccionando] = useState(false);
+  const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set());
+  const [showCortesiaForm, setShowCortesiaForm] = useState(false);
+  const [cortesiaError, setCortesiaError] = useState<string | null>(null);
+
+  function salirSeleccion() {
+    setSeleccionando(false);
+    setSeleccionados(new Set());
+  }
+
+  function handlePalcoClick(id: string) {
+    if (!seleccionando) {
+      setSelectedPalcoId(id);
+      return;
+    }
+    setSeleccionados((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  }
 
   const localidad = localities.find((l) => l.id === localityId);
   // Se re-deriva de la lista en vivo (no de una copia guardada) para que el modal
@@ -74,11 +97,37 @@ export function LocalityDetailPage() {
 
         {!loading && localidad && localidad.palcosConfig.cantidad > 0 && (
           <section className="mb-8">
-            <h2 className="mb-3 text-lg font-semibold text-text-primary">Palcos</h2>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-lg font-semibold text-text-primary">Palcos</h2>
+              {seleccionando ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm text-text-secondary">{seleccionados.size} seleccionados</span>
+                  <button onClick={salirSeleccion} className={buttonSecondaryClass}>
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => setShowCortesiaForm(true)}
+                    disabled={seleccionados.size === 0}
+                    className={buttonPrimaryClass}
+                  >
+                    Marcar como cortesía
+                  </button>
+                </div>
+              ) : (
+                <button onClick={() => setSeleccionando(true)} className={buttonSecondaryClass}>
+                  Seleccionar para cortesía
+                </button>
+              )}
+            </div>
             {query && filteredPalcos.length === 0 ? (
               <p className="text-sm text-text-muted">Ningún palco coincide con "{query}".</p>
             ) : (
-              <PalcoGrid palcos={filteredPalcos} onSelect={(p) => setSelectedPalcoId(p.id)} />
+              <PalcoGrid
+                palcos={filteredPalcos}
+                onSelect={(p) => handlePalcoClick(p.id)}
+                selectionMode={seleccionando}
+                selectedIds={seleccionados}
+              />
             )}
           </section>
         )}
@@ -120,6 +169,31 @@ export function LocalityDetailPage() {
           palco={selectedPalco}
           onClose={() => setSelectedPalcoId(null)}
         />
+      )}
+
+      {showCortesiaForm && (
+        <Modal
+          title={`Cortesía para ${seleccionados.size} palco${seleccionados.size === 1 ? "" : "s"}`}
+          onClose={() => setShowCortesiaForm(false)}
+        >
+          <p className="mb-3 text-sm text-text-secondary">
+            Los palcos quedarán asignados a esta persona o entidad y no contarán como ingreso.
+          </p>
+          <CortesiaForm
+            onCancel={() => setShowCortesiaForm(false)}
+            onSubmit={async (values) => {
+              setCortesiaError(null);
+              try {
+                await marcarPalcosCortesia(eventId, localityId, [...seleccionados], values);
+                setShowCortesiaForm(false);
+                salirSeleccion();
+              } catch (e) {
+                setCortesiaError(e instanceof Error ? e.message : "No se pudo marcar la cortesía");
+              }
+            }}
+          />
+          {cortesiaError && <p className="mt-3 text-sm text-status-critical">{cortesiaError}</p>}
+        </Modal>
       )}
 
       {selectedSale && localidad && (

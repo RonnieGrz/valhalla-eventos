@@ -16,9 +16,12 @@ const estadoLabel: Record<Palco["estado"], string> = {
 interface PalcoGridProps {
   palcos: Palco[];
   onSelect: (palco: Palco) => void;
+  /** Modo selección múltiple: solo se pueden elegir palcos disponibles. */
+  selectionMode?: boolean;
+  selectedIds?: Set<string>;
 }
 
-export function PalcoGrid({ palcos, onSelect }: PalcoGridProps) {
+export function PalcoGrid({ palcos, onSelect, selectionMode = false, selectedIds }: PalcoGridProps) {
   return (
     <div>
       <div className="mb-3 flex flex-wrap gap-4 text-xs text-text-secondary">
@@ -39,14 +42,21 @@ export function PalcoGrid({ palcos, onSelect }: PalcoGridProps) {
         </span>
       </div>
       <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8">
-        {palcos.map((palco) => (
+        {palcos.map((palco) => {
+          const seleccionado = selectedIds?.has(palco.id) ?? false;
+          const bloqueado = selectionMode && palco.estado !== "disponible";
+          return (
           <button
             key={palco.id}
             onClick={() => onSelect(palco)}
+            disabled={bloqueado}
+            aria-pressed={selectionMode ? seleccionado : undefined}
             aria-label={`Palco ${palco.numero}, ${estadoLabel[palco.estado]}${
-              palco.vendiblePorBoleta ? ", también vendible por boleta suelta" : ""
-            }`}
-            className={`relative aspect-square rounded-lg border-2 text-sm font-semibold transition duration-150 ease-out-strong active:scale-90 ${estadoClasses[palco.estado]}`}
+              palco.cortesia ? ", cortesía" : ""
+            }${palco.vendiblePorBoleta ? ", también vendible por boleta suelta" : ""}`}
+            className={`relative aspect-square rounded-lg border-2 text-sm font-semibold transition duration-150 ease-out-strong active:scale-90 ${estadoClasses[palco.estado]} ${
+              bloqueado ? "opacity-40" : ""
+            } ${seleccionado ? "border-series-1 bg-series-1/15 text-series-1" : ""}`}
           >
             {palco.numero}
             {palco.estado !== "disponible" && (
@@ -58,6 +68,11 @@ export function PalcoGrid({ palcos, onSelect }: PalcoGridProps) {
                 )}
               </span>
             )}
+            {palco.cortesia && (
+              <span className="absolute bottom-1 right-1 text-[10px] font-medium leading-none" aria-hidden="true">
+                Cort.
+              </span>
+            )}
             {palco.vendiblePorBoleta && (
               <span
                 className="absolute right-1 top-1 h-2 w-2 rounded-full bg-series-1"
@@ -65,7 +80,8 @@ export function PalcoGrid({ palcos, onSelect }: PalcoGridProps) {
               />
             )}
           </button>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
