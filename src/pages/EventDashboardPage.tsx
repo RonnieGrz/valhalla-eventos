@@ -175,10 +175,11 @@ export function EventDashboardPage() {
 
         {loading && <p className="text-text-muted">Cargando datos del evento...</p>}
 
-        <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
           <StatCard label="Palcos disponibles" value={String(palcoStats.disponibles)} />
           <StatCard label="Palcos separados" value={String(palcoStats.separados)} accentClass="text-status-warning" />
           <StatCard label="Palcos vendidos" value={String(palcoStats.vendidos)} accentClass="text-status-good" />
+          <StatCard label="Palcos de cortesía" value={String(palcoStats.cortesias)} accentClass="text-series-1" />
           <StatCard label="Boletas separadas" value={String(boletaStats.separadas)} accentClass="text-status-warning" />
           <StatCard label="Boletas vendidas" value={String(boletaStats.vendidas)} accentClass="text-status-good" />
           <StatCard label="Total palcos" value={String(palcoStats.total)} />
@@ -259,6 +260,7 @@ export function EventDashboardPage() {
               disponibles={palcoStats.disponibles}
               separados={palcoStats.separados}
               vendidos={palcoStats.vendidos}
+              cortesias={palcoStats.cortesias}
             />
           </div>
           <div className="rounded-xl border border-gridline bg-surface-1 p-4 shadow-sm">

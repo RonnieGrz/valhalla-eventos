@@ -13,24 +13,26 @@ interface PalcoEstadoChartProps {
   disponibles: number;
   separados: number;
   vendidos: number;
+  cortesias: number;
 }
 
 const data = (p: PalcoEstadoChartProps) => [
   { estado: "Disponibles", cantidad: p.disponibles, color: "var(--status-neutral)" },
   { estado: "Separados", cantidad: p.separados, color: "var(--status-warning)" },
   { estado: "Vendidos", cantidad: p.vendidos, color: "var(--status-good)" },
+  { estado: "Cortesías", cantidad: p.cortesias, color: "var(--series-1)" },
 ];
 
 export function PalcoEstadoChart(props: PalcoEstadoChartProps) {
   const chartData = data(props);
-  const total = props.disponibles + props.separados + props.vendidos;
+  const total = props.disponibles + props.separados + props.vendidos + props.cortesias;
 
   if (total === 0) {
     return <p className="text-sm text-text-muted">Esta localidad aún no tiene palcos.</p>;
   }
 
   return (
-    <ResponsiveContainer width="100%" height={160}>
+    <ResponsiveContainer width="100%" height={200}>
       <BarChart data={chartData} layout="vertical" margin={{ top: 4, right: 24, left: 0, bottom: 4 }}>
         <XAxis type="number" hide />
         <YAxis

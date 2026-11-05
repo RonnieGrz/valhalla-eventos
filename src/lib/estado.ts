@@ -57,7 +57,9 @@ export function contarPalcosPorEstado(palcos: Palco[]) {
   return {
     disponibles: palcos.filter((p) => p.estado === "disponible").length,
     separados: palcos.filter((p) => p.estado === "separado").length,
-    vendidos: palcos.filter((p) => p.estado === "vendido").length,
+    // Los de cortesía se cuentan aparte para no inflar la cifra de palcos realmente vendidos.
+    vendidos: palcos.filter((p) => p.estado === "vendido" && !p.cortesia).length,
+    cortesias: palcos.filter((p) => p.cortesia).length,
     total: palcos.length,
   };
 }
