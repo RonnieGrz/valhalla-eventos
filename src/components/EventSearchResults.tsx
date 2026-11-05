@@ -10,6 +10,7 @@ interface EventSearchResultsProps {
   palcosByLocality: Record<string, Palco[]>;
   salesByLocality: Record<string, BoletaSale[]>;
   seatSalesByPalco: Record<string, PalcoBoletaSale[]>;
+  onSelectPalco: (localityId: string, palcoId: string) => void;
 }
 
 const rowClass =
@@ -23,6 +24,7 @@ export function EventSearchResults({
   palcosByLocality,
   salesByLocality,
   seatSalesByPalco,
+  onSelectPalco,
 }: EventSearchResultsProps) {
   const palcoRows = localities.flatMap((loc) =>
     (palcosByLocality[loc.id] ?? []).flatMap((palco) => {
@@ -55,7 +57,11 @@ export function EventSearchResults({
                   : seatMatches.map((s) => s.comprador);
               return (
                 <li key={palco.id}>
-                  <Link to={`/eventos/${eventId}/localidades/${loc.id}?palco=${palco.id}`} className={rowClass}>
+                  <button
+                    type="button"
+                    onClick={() => onSelectPalco(loc.id, palco.id)}
+                    className={`${rowClass} w-full text-left`}
+                  >
                     <div>
                       <p className="font-medium text-text-primary">
                         {loc.nombre} · Palco {palco.numero}
@@ -70,7 +76,7 @@ export function EventSearchResults({
                       ))}
                     </div>
                     <EstadoBadge estado={palco.estado} />
-                  </Link>
+                  </button>
                 </li>
               );
             })}

@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { AddPalcosForm } from "../components/AddPalcosForm";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { EventSearchResults } from "../components/EventSearchResults";
+import { PalcoDetailModal } from "../components/PalcoDetailModal";
 import { buttonPrimaryClass, inputClass } from "../components/form/FormField";
 import { LocalityCard } from "../components/LocalityCard";
 import { LocalityForm } from "../components/LocalityForm";
@@ -23,6 +24,11 @@ export function EventLocalitiesPage() {
   // Compradores de boletas sueltas dentro de un palco: se leen una vez, solo al empezar a buscar.
   const [seatSalesByPalco, setSeatSalesByPalco] = useState<Record<string, PalcoBoletaSale[]>>({});
   const buscando = query.trim() !== "";
+  const [selectedPalco, setSelectedPalco] = useState<{ localityId: string; palcoId: string } | null>(null);
+  // Se re-deriva de la lista en vivo para que el modal refleje abonos/estado nuevos sin reabrirlo.
+  const palcoAbierto = selectedPalco
+    ? ((palcosByLocality[selectedPalco.localityId] ?? []).find((p) => p.id === selectedPalco.palcoId) ?? null)
+    : null;
 
   useEffect(() => {
     if (!eventId || !buscando) return;
@@ -110,6 +116,7 @@ export function EventLocalitiesPage() {
             palcosByLocality={palcosByLocality}
             salesByLocality={salesByLocality}
             seatSalesByPalco={seatSalesByPalco}
+            onSelectPalco={(localityId, palcoId) => setSelectedPalco({ localityId, palcoId })}
           />
         )}
 
@@ -125,6 +132,15 @@ export function EventLocalitiesPage() {
           ))}
         </div>
       </main>
+
+      {selectedPalco && palcoAbierto && (
+        <PalcoDetailModal
+          eventId={eventId}
+          localityId={selectedPalco.localityId}
+          palco={palcoAbierto}
+          onClose={() => setSelectedPalco(null)}
+        />
+      )}
 
       {localidadToDelete && (
         <ConfirmDialog
