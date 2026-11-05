@@ -329,6 +329,16 @@ export async function actualizarSillasAdicionalesPalco(
   });
 }
 
+/** Lectura única de las ventas de boletas sueltas de un palco (para búsquedas globales). */
+export async function getPalcoBoletaSales(
+  eventId: string,
+  localityId: string,
+  palcoId: string,
+): Promise<PalcoBoletaSale[]> {
+  const snap = await getDocs(palcoBoletaSalesCol(eventId, localityId, palcoId));
+  return snap.docs.map((d) => ({ id: d.id, palcoId, ...(d.data() as PalcoBoletaSaleDoc) }));
+}
+
 export function listenPalcoBoletaSales(
   eventId: string,
   localityId: string,

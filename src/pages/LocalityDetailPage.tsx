@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { BoletaSaleDetailModal } from "../components/BoletaSaleDetailModal";
 import { BoletaSaleList } from "../components/BoletaSaleList";
 import { EditarPrecioBoletasForm } from "../components/EditarPrecioBoletasForm";
@@ -23,13 +23,15 @@ export function LocalityDetailPage() {
   const { eventId, localityId } = useParams<{ eventId: string; localityId: string }>();
   const { localities } = useLocalities(eventId);
   const { palcos, boletaSales, loading } = useLocalityDetail(eventId, localityId);
-  const [selectedPalcoId, setSelectedPalcoId] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  // Llegar desde el buscador del evento abre directamente el palco, o precarga el filtro.
+  const [selectedPalcoId, setSelectedPalcoId] = useState<string | null>(searchParams.get("palco"));
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
   const [showVentaForm, setShowVentaForm] = useState(false);
   const [ventaError, setVentaError] = useState<string | null>(null);
   const [editingPrecio, setEditingPrecio] = useState(false);
   const [precioError, setPrecioError] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const [seleccionando, setSeleccionando] = useState(false);
   const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set());
   const [showCortesiaForm, setShowCortesiaForm] = useState(false);

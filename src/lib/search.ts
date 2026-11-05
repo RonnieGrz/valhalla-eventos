@@ -9,10 +9,16 @@ function normalizeDigits(value: string): string {
   return value.replace(/[^a-z0-9]/gi, "").toLowerCase();
 }
 
-function compradorMatches(comprador: Comprador | null, query: string): boolean {
+export function compradorMatches(comprador: Comprador | null, query: string): boolean {
   if (!comprador) return false;
   if (normalizeText(comprador.nombre).includes(normalizeText(query))) return true;
-  return normalizeDigits(comprador.cedula).includes(normalizeDigits(query));
+  // Si la búsqueda no tiene letras ni números (p. ej. solo "."), no debe coincidir con todo.
+  const digits = normalizeDigits(query);
+  if (!digits) return false;
+  return (
+    normalizeDigits(comprador.cedula).includes(digits) ||
+    normalizeDigits(comprador.telefono).includes(digits)
+  );
 }
 
 /** Un palco coincide por su número o por el nombre/cédula de quien lo reservó. */

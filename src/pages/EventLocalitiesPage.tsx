@@ -1,22 +1,47 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { AddPalcosForm } from "../components/AddPalcosForm";
 import { ConfirmDialog } from "../components/ConfirmDialog";
-import { buttonPrimaryClass } from "../components/form/FormField";
+import { EventSearchResults } from "../components/EventSearchResults";
+import { buttonPrimaryClass, inputClass } from "../components/form/FormField";
 import { LocalityCard } from "../components/LocalityCard";
 import { LocalityForm } from "../components/LocalityForm";
 import { Navbar } from "../components/Navbar";
-import { useLocalities } from "../hooks/useLocalities";
+import { useEventData } from "../hooks/useEventData";
 import {
   addPalcosToLocality,
   createLocality,
   deleteLocality,
 } from "../services/localities";
-import type { Localidad } from "../types";
+import { getPalcoBoletaSales } from "../services/palcos";
+import type { Localidad, PalcoBoletaSale } from "../types";
 
 export function EventLocalitiesPage() {
   const { eventId } = useParams<{ eventId: string }>();
-  const { localities, loading } = useLocalities(eventId);
+  const { localities, palcosByLocality, salesByLocality, loading } = useEventData(eventId);
+  const [query, setQuery] = useState("");
+  // Compradores de boletas sueltas dentro de un palco: se leen una vez, solo al empezar a buscar.
+  const [seatSalesByPalco, setSeatSalesByPalco] = useState<Record<string, PalcoBoletaSale[]>>({});
+  const buscando = query.trim() !== "";
+
+  useEffect(() => {
+    if (!eventId || !buscando) return;
+    const pendientes = localities.flatMap((loc) =>
+      (palcosByLocality[loc.id] ?? [])
+        .filter((p) => p.boletasVendidas > 0 && !(p.id in seatSalesByPalco))
+        .map((p) => ({ locId: loc.id, palcoId: p.id })),
+    );
+    if (pendientes.length === 0) return;
+    // Se marca como cargado de inmediato para no repetir la lectura mientras llega.
+    setSeatSalesByPalco((prev) => ({ ...prev, ...Object.fromEntries(pendientes.map((x) => [x.palcoId, []])) }));
+    for (const { locId, palcoId } of pendientes) {
+      getPalcoBoletaSales(eventId, locId, palcoId)
+        .then((sales) => setSeatSalesByPalco((prev) => ({ ...prev, [palcoId]: sales })))
+        .catch(() => {
+          // Se conserva el marcador vacío: no se reintenta en bucle; la búsqueda sigue funcionando sin estos datos.
+        });
+    }
+  }, [eventId, buscando, localities, palcosByLocality, seatSalesByPalco]);
   const [showForm, setShowForm] = useState(false);
   const [addPalcosFor, setAddPalcosFor] = useState<Localidad | null>(null);
   const [localidadToDelete, setLocalidadToDelete] = useState<Localidad | null>(null);
@@ -64,7 +89,31 @@ export function EventLocalitiesPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {!loading && localities.length > 0 && (
+          <div className="mb-6">
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar palco por número, nombre, cédula o teléfono"
+              className={inputClass}
+              aria-label="Buscar palco en todas las localidades"
+            />
+          </div>
+        )}
+
+        {buscando && (
+          <EventSearchResults
+            eventId={eventId}
+            query={query}
+            localities={localities}
+            palcosByLocality={palcosByLocality}
+            salesByLocality={salesByLocality}
+            seatSalesByPalco={seatSalesByPalco}
+          />
+        )}
+
+        <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 ${buscando ? "hidden" : ""}`}>
           {localities.map((localidad) => (
             <LocalityCard
               key={localidad.id}
