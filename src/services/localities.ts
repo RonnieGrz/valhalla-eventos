@@ -140,6 +140,31 @@ export async function updateLocality(
   await updateDoc(doc(db, "events", eventId, "localities", localityId), data);
 }
 
+/** Cambia el precio de los palcos de una localidad ya creada. Se aplica a los palcos
+ *  disponibles (sin comprador ni boletas vendidas) y al precio por defecto de la localidad;
+ *  los palcos ya reservados o vendidos conservan su precio. */
+export async function updatePalcosPrecio(eventId: string, localityId: string, precio: number) {
+  const palcosSnap = await getDocs(
+    collection(db, "events", eventId, "localities", localityId, "palcos"),
+  );
+  const now = Date.now();
+  const editables = palcosSnap.docs.filter((d) => {
+    const p = d.data() as PalcoDoc;
+    return p.estado === "disponible" && !p.comprador && (p.boletasVendidas ?? 0) === 0;
+  });
+
+  // Firestore limita cada batch a 500 operaciones.
+  for (let i = 0; i < editables.length; i += 400) {
+    const batch = writeBatch(db);
+    editables.slice(i, i + 400).forEach((d) => batch.update(d.ref, { precio, updatedAt: now }));
+    await batch.commit();
+  }
+
+  await updateDoc(doc(db, "events", eventId, "localities", localityId), {
+    "palcosConfig.precio": precio,
+  });
+}
+
 /** Borra palcos/boletaSales y sus payments, sin borrar el doc de la localidad. */
 export async function deleteLocalityChildren(eventId: string, localityId: string) {
   const localityPath = ["events", eventId, "localities", localityId] as const;

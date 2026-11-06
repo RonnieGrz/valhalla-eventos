@@ -15,7 +15,8 @@ import { palcoMatchesQuery, ventaMatchesQuery } from "../lib/search";
 import { useLocalities } from "../hooks/useLocalities";
 import { useLocalityDetail } from "../hooks/useLocalityDetail";
 import { crearVentaBoletas } from "../services/boletaSales";
-import { updateLocality } from "../services/localities";
+import { updateLocality, updatePalcosPrecio } from "../services/localities";
+import { EditarPrecioPalcosForm } from "../components/EditarPrecioPalcosForm";
 import { marcarPalcosCortesia } from "../services/palcos";
 import { CortesiaForm } from "../components/CortesiaForm";
 
@@ -31,6 +32,8 @@ export function LocalityDetailPage() {
   const [ventaError, setVentaError] = useState<string | null>(null);
   const [editingPrecio, setEditingPrecio] = useState(false);
   const [precioError, setPrecioError] = useState<string | null>(null);
+  const [editingPrecioPalcos, setEditingPrecioPalcos] = useState(false);
+  const [precioPalcosError, setPrecioPalcosError] = useState<string | null>(null);
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const [seleccionando, setSeleccionando] = useState(false);
   const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set());
@@ -116,9 +119,14 @@ export function LocalityDetailPage() {
                   </button>
                 </div>
               ) : (
-                <button onClick={() => setSeleccionando(true)} className={buttonSecondaryClass}>
-                  Seleccionar para cortesía
-                </button>
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={() => setEditingPrecioPalcos(true)} className={buttonSecondaryClass}>
+                    Editar precio
+                  </button>
+                  <button onClick={() => setSeleccionando(true)} className={buttonSecondaryClass}>
+                    Seleccionar para cortesía
+                  </button>
+                </div>
               )}
             </div>
             {query && filteredPalcos.length === 0 ? (
@@ -234,6 +242,27 @@ export function LocalityDetailPage() {
             }}
           />
           {ventaError && <p className="mt-3 text-sm text-status-critical">{ventaError}</p>}
+        </Modal>
+      )}
+
+      {editingPrecioPalcos && localidad && (
+        <Modal title="Editar precio de palcos" onClose={() => setEditingPrecioPalcos(false)}>
+          <EditarPrecioPalcosForm
+            precioActual={localidad.palcosConfig.precio}
+            onCancel={() => setEditingPrecioPalcos(false)}
+            onSubmit={async (values) => {
+              setPrecioPalcosError(null);
+              try {
+                await updatePalcosPrecio(eventId, localityId, values.precio);
+                setEditingPrecioPalcos(false);
+              } catch (e) {
+                setPrecioPalcosError(
+                  e instanceof Error ? e.message : "No se pudo actualizar el precio",
+                );
+              }
+            }}
+          />
+          {precioPalcosError && <p className="mt-3 text-sm text-status-critical">{precioPalcosError}</p>}
         </Modal>
       )}
 
