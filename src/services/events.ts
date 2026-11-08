@@ -46,5 +46,10 @@ export async function deleteEvent(eventId: string) {
     await deleteDoc(localityDoc.ref);
   }
 
+  const expensesSnap = await getDocs(collection(db, "events", eventId, "expenses"));
+  for (const expenseDoc of expensesSnap.docs) {
+    await deleteDoc(expenseDoc.ref);
+  }
+
   await deleteDoc(doc(db, "events", eventId));
 }

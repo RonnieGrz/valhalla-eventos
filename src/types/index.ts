@@ -124,3 +124,15 @@ export interface Payment extends PaymentDoc {
   /** Id del documento padre inmediato (palco, venta de boleta suelta en palco, o venta de boleta suelta en localidad). Derivado de la ruta del documento, no se guarda en Firestore. */
   parentId?: string;
 }
+
+/** Gasto registrado para un evento (producción, logística, publicidad, etc.). */
+export interface GastoDoc {
+  fecha: string; // ISO date (yyyy-mm-dd)
+  descripcion: string;
+  monto: number;
+  createdAt: number;
+}
+
+export interface Gasto extends GastoDoc {
+  id: string;
+}

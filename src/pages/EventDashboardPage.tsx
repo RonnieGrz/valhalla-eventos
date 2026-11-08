@@ -11,6 +11,7 @@ import {
 import { buttonSecondaryClass, inputClass } from "../components/form/FormField";
 import { useEventData } from "../hooks/useEventData";
 import { useEventPayments } from "../hooks/useEventPayments";
+import { useExpenses } from "../hooks/useExpenses";
 import { useEvents } from "../hooks/useEvents";
 import {
   contarBoletasPorEstado,
@@ -71,6 +72,7 @@ export function EventDashboardPage() {
   const { localities, palcosByLocality, salesByLocality, allPalcos, allSales, loading } =
     useEventData(eventId);
   const { payments } = useEventPayments(eventId);
+  const { gastos } = useExpenses(eventId);
   const { events } = useEvents();
   const [descargando, setDescargando] = useState(false);
   const [metodoFiltro, setMetodoFiltro] = useState<MetodoPago | "todos">("todos");
@@ -107,6 +109,8 @@ export function EventDashboardPage() {
     allPalcos.reduce((sum, p) => sum + montoRecaudadoPalco(p), 0) +
     allSales.reduce((sum, s) => sum + s.montoAbonado, 0);
   const montoPendiente = Math.max(0, montoComprometido - montoRecaudado);
+  const totalGastos = gastos.reduce((sum, g) => sum + g.monto, 0);
+  const balance = montoRecaudado - totalGastos;
 
   const recaudadoPorMetodo = payments.reduce<Record<MetodoPago, number>>(
     (acc, p) => {
@@ -189,6 +193,18 @@ export function EventDashboardPage() {
           <StatCard label="Ingresos comprometidos" value={formatCOP(montoComprometido)} />
           <StatCard label="Recaudado" value={formatCOP(montoRecaudado)} accentClass="text-status-good" />
           <StatCard label="Pendiente por cobrar" value={formatCOP(montoPendiente)} accentClass="text-status-warning" />
+        </div>
+
+        <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <StatCard label="Recaudado" value={formatCOP(montoRecaudado)} accentClass="text-status-good" />
+          <Link to={`/eventos/${eventId}/gastos`} className="block" aria-label="Ver gastos del evento">
+            <StatCard label="Gastos" value={formatCOP(totalGastos)} accentClass="text-status-critical" />
+          </Link>
+          <StatCard
+            label="Balance (recaudado − gastos)"
+            value={formatCOP(balance)}
+            accentClass={balance < 0 ? "text-status-critical" : "text-status-good"}
+          />
         </div>
 
         <div className="mb-8">

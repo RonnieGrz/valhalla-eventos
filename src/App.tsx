@@ -17,6 +17,9 @@ const EventsListPage = lazy(() =>
 const LocalityDetailPage = lazy(() =>
   import("./pages/LocalityDetailPage").then((m) => ({ default: m.LocalityDetailPage })),
 );
+const EventExpensesPage = lazy(() =>
+  import("./pages/EventExpensesPage").then((m) => ({ default: m.EventExpensesPage })),
+);
 const LoginPage = lazy(() => import("./pages/LoginPage").then((m) => ({ default: m.LoginPage })));
 
 function RouteFallback() {
@@ -53,6 +56,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <EventLocalitiesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/eventos/:eventId/gastos"
+              element={
+                <ProtectedRoute>
+                  <EventExpensesPage />
                 </ProtectedRoute>
               }
             />

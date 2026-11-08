@@ -57,6 +57,9 @@ export function Navbar() {
               <NavLink to={`/eventos/${eventId}/localidades`} className={tabClass}>
                 Localidades
               </NavLink>
+              <NavLink to={`/eventos/${eventId}/gastos`} className={tabClass}>
+                Gastos
+              </NavLink>
             </nav>
           </div>
         </div>
